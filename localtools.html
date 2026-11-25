@@ -1,0 +1,2915 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalTools — 11 оффлайн-утилит без регистрации</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .checkerboard {
+            background-color: #f1f5f9;
+            background-image: linear-gradient(45deg, #cbd5e1 25%, transparent 25%),
+                              linear-gradient(-45deg, #cbd5e1 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, #cbd5e1 75%),
+                              linear-gradient(-45deg, transparent 75%, #cbd5e1 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+        }
+        html.dark .checkerboard {
+            background-color: #0f172a;
+            background-image: linear-gradient(45deg, #1e293b 25%, transparent 25%),
+                              linear-gradient(-45deg, #1e293b 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, #1e293b 75%),
+                              linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+        }
+
+        /* ========================================================= */
+        /* СТИЛИ РЕЖИМА ПРЕДПРОСМОТРА «ТЕЛЕФОН» (MOBILE VIEWPORT)    */
+        /* ========================================================= */
+        #app-viewport-wrapper {
+            transition: all 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        body.mobile-preview-mode {
+            background-color: #e2e8f0;
+        }
+        html.dark body.mobile-preview-mode {
+            background-color: #030712;
+        }
+        body.mobile-preview-mode #app-viewport-wrapper {
+            width: 396px;
+            max-width: calc(100vw - 24px);
+            height: 816px;
+            max-height: calc(100vh - 96px);
+            margin: 1rem auto;
+            border-radius: 46px;
+            border: 11px solid #1e293b;
+            box-shadow: 0 28px 65px -15px rgba(0, 0, 0, 0.55), 0 0 0 2px rgba(99, 102, 241, 0.35);
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+            background-color: #f8fafc;
+        }
+        html.dark body.mobile-preview-mode #app-viewport-wrapper {
+            border-color: #0f172a;
+            background-color: #020617;
+            box-shadow: 0 28px 65px -15px rgba(0, 0, 0, 0.85), 0 0 0 2px rgba(99, 102, 241, 0.45);
+        }
+        body.mobile-preview-mode #app-viewport-wrapper::-webkit-scrollbar {
+            width: 4px;
+        }
+        body.mobile-preview-mode #app-viewport-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.45);
+            border-radius: 9999px;
+        }
+        body.mobile-preview-mode #app-layout-grid {
+            display: flex !important;
+            flex-direction: column !important;
+            padding: 12px !important;
+            gap: 14px !important;
+        }
+        body.mobile-preview-mode #app-sidebar {
+            position: static !important;
+            width: 100% !important;
+        }
+        body.mobile-preview-mode #tools-nav {
+            display: flex !important;
+            flex-direction: row !important;
+            overflow-x: auto !important;
+            padding: 6px !important;
+            gap: 6px !important;
+        }
+        body.mobile-preview-mode #tools-nav .tab-btn {
+            padding: 10px 14px !important;
+            font-size: 13px !important;
+            flex-shrink: 0 !important;
+        }
+        body.mobile-preview-mode main .grid {
+            grid-template-columns: minmax(0, 1fr) !important;
+        }
+        body.mobile-preview-mode main .sm\:col-span-1,
+        body.mobile-preview-mode main .col-span-2 {
+            grid-column: span 1 / span 1 !important;
+        }
+        body.mobile-preview-mode .tool-panel > div {
+            padding: 16px !important;
+            border-radius: 20px !important;
+        }
+        body.mobile-preview-mode button,
+        body.mobile-preview-mode select,
+        body.mobile-preview-mode input[type="text"] {
+            min-height: 42px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+
+    <!-- Глобальный полноэкранный оверлей теста пикселей (поверх макета и десктопа) -->
+    <div id="pixel-fullscreen-overlay" class="fixed inset-0 z-[100] hidden cursor-pointer select-none flex-col items-center justify-center transition-colors duration-100" style="background-color: #ff0000;">
+        <div id="pixel-overlay-hint" class="bg-black/75 backdrop-blur-md text-white px-5 py-3.5 rounded-2xl text-center shadow-2xl border border-white/15 max-w-xs mx-4 transition-opacity duration-300">
+            <p id="pixel-color-name" class="font-bold text-base">Красный (#FF0000) — 1 / 8</p>
+            <p class="text-xs text-slate-300 mt-1">Клик или стрелки ← → меняют цвет • ESC или кнопка ниже — выход</p>
+            <button type="button" id="pixel-exit-btn" class="mt-3 px-4 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-semibold transition">Закрыть тест (ESC)</button>
+        </div>
+    </div>
+
+    <!-- Глобальное всплывающее уведомление (всегда поверх макета телефона) -->
+    <div id="global-toast" class="fixed bottom-5 right-5 z-[110] hidden items-center gap-2.5 px-4 py-3 rounded-2xl bg-slate-900 dark:bg-slate-800 text-white text-xs sm:text-sm font-medium shadow-2xl border border-slate-700/80 max-w-[calc(100vw-2.5rem)]">
+        <span id="toast-icon">✅</span>
+        <span id="toast-msg">Готово</span>
+    </div>
+
+    <!-- Верхняя панель навигации -->
+    <header class="sticky top-0 z-30 backdrop-blur-md bg-white/85 dark:bg-slate-950/85 border-b border-slate-200/80 dark:border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 font-bold text-lg select-none">
+                    LT
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-lg tracking-tight">LocalTools</span>
+                        <span class="text-[11px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">11 утилит</span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Автономные инструменты в одном файле</p>
+                </div>
+            </div>
+
+            <!-- Переключатель режима Десктоп / Телефон -->
+            <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800" role="group" aria-label="Режим отображения">
+                <button type="button" id="view-desktop-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm transition">
+                    <span>💻</span>
+                    <span>Десктоп</span>
+                </button>
+                <button type="button" id="view-mobile-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition">
+                    <span>📱</span>
+                    <span>Телефон</span>
+                </button>
+                <span id="view-mode-badge" class="hidden sm:inline-block font-mono text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                    Desktop
+                </span>
+            </div>
+
+            <div class="flex items-center gap-3 ml-auto sm:ml-0">
+                <div class="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-medium">
+                    <span>🔒</span>
+                    <span>100% локально в браузере: без серверов и слежки</span>
+                </div>
+
+                <button type="button" id="theme-toggle" aria-label="Переключить тему" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 transition">
+                    <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Контейнер вьюпорта (в режиме «Телефон» превращается в корпус смартфона 396px) -->
+    <div id="app-viewport-wrapper" class="flex-1 flex flex-col w-full">
+
+        <!-- Статус-бар и Dynamic Island для мобильного режима -->
+        <div id="mobile-device-chrome" class="hidden sticky top-0 z-20 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-md px-5 pt-2.5 pb-2 border-b border-slate-200/70 dark:border-slate-800/70 items-center justify-between text-[11px] font-mono select-none">
+            <span id="mobile-clock" class="font-bold text-slate-800 dark:text-slate-200">12:00</span>
+            <div class="w-24 h-5 bg-slate-900 dark:bg-black rounded-full flex items-center justify-end px-2 border border-slate-700/60 shadow-inner">
+                <span class="w-2 h-2 rounded-full bg-indigo-500/70"></span>
+            </div>
+            <div class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                <span>5G</span>
+                <span>100%</span>
+            </div>
+        </div>
+
+        <!-- Основной макет с боковой навигацией и рабочей областью -->
+        <div id="app-layout-grid" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- Сайдбар навигации с поиском -->
+            <aside id="app-sidebar" class="lg:col-span-3 lg:sticky lg:top-20 space-y-3">
+                <div class="relative">
+                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+                    <input type="text" id="tool-search" placeholder="Найти утилиту..." class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm focus:outline-none focus:border-indigo-500 transition">
+                </div>
+
+                <nav aria-label="Каталог утилит" id="tools-nav" class="flex lg:flex-col overflow-x-auto no-scrollbar gap-1.5 p-1.5 bg-slate-200/60 dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <button type="button" data-tab="image-tool" data-keywords="фото сжатие webp jpeg png конвертер размер" class="tab-btn active flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm text-left">
+                        <span>🖼️</span>
+                        <span>Фото и сжатие</span>
+                    </button>
+                    <button type="button" data-tab="qr-tool" data-keywords="qr код генератор ссылка кириллица png" class="tab-btn flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-left">
+                        <span>📱</span>
+                        <span>QR-генератор</span>
+                    </button>
+                    <button type="button" data-tab="screen-tool" data-keywords="экран монитор битые пиксели тест заливка разрешение" class="tab-btn flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-left">
+                        <span>🖥️</span>
+                        <span>Тест экрана</span>
+                    </button>
+                    <button type="button" data-tab="mic-tool" data-keywords="микрофон звук запись проверка осциллограф" class="tab-btn flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-left">
+                        <span>🎙️</span>
+                        <span>Проверка микрофона</span>
+                    </button>
+                    <button type="button" data-tab="pass-tool" data-keywords="пароли генератор sha256 хеш безопасность энтропия" class="tab-btn flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-left">
+                        <span>🔐</span>
+                        <span>Пароли и SHA-256</span>
+                    </button>
+                    <button type="button" data-tab="exif-tool" data-keywords="exif метаданные gps камера очистка приватность фото" class="tab-btn flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-left">
+                        <span>🕵️</span>
+                        <span>EXIF и метаданные</span>
+                    </button>
+                    <button type="button" data-tab="diff-tool" data-keywords="сравнение текста diff строки различия" class="tab-btn flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-left">
+                        <span>⚖️</span>
+                        <span>Сравнение текста</span>
+                    </button>
+                    <button type="button" data-tab="dev-tool" data-keywords="json base64 url jwt токен декодер форматирование" class="tab-btn flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-left">
+                        <span>🧩</span>
+                        <span>JSON / Base64 / JWT</span>
+                    </button>
+                    <button type="button" data-tab="text-tool" data-keywords="текст очистка дубликаты слова символы транслит" class="tab-btn flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-left">
+                        <span>📝</span>
+                        <span>Текст и очистка</span>
+                    </button>
+                    <button type="button" data-tab="audio-tool" data-keywords="аудио тон генератор частота динамики наушники bpm темп" class="tab-btn flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-left">
+                        <span>🔊</span>
+                        <span>Аудио и тон-генератор</span>
+                    </button>
+                    <button type="button" data-tab="fps-tool" data-keywords="fps гц герцовка частота кадров ufo тест плавность стресс canvas gpu cpu" class="tab-btn flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-left">
+                        <span>⚡</span>
+                        <span>Тест FPS / Гц</span>
+                    </button>
+                </nav>
+                <p id="no-tools-found" class="hidden text-xs text-slate-500 text-center py-3">Ничего не найдено</p>
+            </aside>
+
+            <!-- Основная рабочая область -->
+            <main class="lg:col-span-9 min-w-0">
+
+                <!-- ========================================================= -->
+                <!-- 1. ФОТО И СЖАТИЕ                                          -->
+                <!-- ========================================================= -->
+                <section id="image-tool" class="tool-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-sm space-y-6">
+                        <div>
+                            <h1 class="text-xl sm:text-2xl font-bold">Сжатие и конвертация изображений</h1>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Локальная перекодировка через HTML5 Canvas. Файлы не загружаются в интернет.</p>
+                        </div>
+
+                        <div id="img-dropzone" class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 rounded-2xl p-8 text-center cursor-pointer transition bg-slate-50/60 dark:bg-slate-950/50">
+                            <input type="file" id="img-input" accept="image/*" class="hidden">
+                            <div class="text-4xl mb-3">📂</div>
+                            <p class="font-semibold text-base">Перетащите изображение сюда или нажмите для выбора</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Поддерживаются PNG, JPEG, WebP, GIF, BMP</p>
+                        </div>
+
+                        <div id="img-workspace" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                            <div class="lg:col-span-5 space-y-4 bg-slate-50 dark:bg-slate-950/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+                                <div>
+                                    <label for="img-format" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Формат вывода</label>
+                                    <select id="img-format" class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-500">
+                                        <option value="image/webp">WebP (оптимальное сжатие)</option>
+                                        <option value="image/jpeg">JPEG (совместимый)</option>
+                                        <option value="image/png">PNG (без потерь)</option>
+                                    </select>
+                                </div>
+
+                                <div id="img-quality-wrap">
+                                    <div class="flex justify-between text-xs font-semibold mb-1.5">
+                                        <span class="text-slate-500 uppercase tracking-wider">Качество сжатия</span>
+                                        <span id="img-quality-val" class="font-mono text-indigo-600 dark:text-indigo-400">82%</span>
+                                    </div>
+                                    <input type="range" id="img-quality" min="10" max="100" value="82" class="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer accent-indigo-600">
+                                </div>
+
+                                <div class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500">Разрешение:</span>
+                                        <span id="img-dims" class="font-mono font-semibold">—</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500">Оригинал:</span>
+                                        <span id="img-orig-size" class="font-mono font-semibold">—</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500">Результат:</span>
+                                        <span id="img-new-size" class="font-mono font-semibold">—</span>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                                        <span class="text-slate-500">Экономия:</span>
+                                        <span id="img-savings" class="font-mono font-bold text-emerald-500">—</span>
+                                    </div>
+                                </div>
+
+                                <div id="img-heavier-warn" class="hidden p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-300 text-xs">
+                                    ⚠️ Новый файл получился тяжелее оригинала (обычно при конвертации в PNG или высоком качестве). Попробуйте формат WebP или снизьте качество.
+                                </div>
+
+                                <div class="flex flex-col gap-2 pt-1">
+                                    <button type="button" id="img-download-btn" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition">
+                                        ⬇️ Скачать результат
+                                    </button>
+                                    <button type="button" id="img-reset-btn" class="w-full py-2 px-4 rounded-xl bg-slate-200/70 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition">
+                                        Выбрать другое фото
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="lg:col-span-7 flex flex-col">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Предпросмотр</span>
+                                <div class="flex-1 min-h-[260px] rounded-2xl border border-slate-200 dark:border-slate-800 checkerboard flex items-center justify-center p-4 overflow-hidden">
+                                    <img id="img-preview" alt="Предпросмотр" class="max-h-[340px] w-auto object-contain rounded-lg shadow-md">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ========================================================= -->
+                <!-- 2. QR-ГЕНЕРАТОР (VERSION 1-10, КИРИЛЛИЦА, ДО 271 БАЙТА)   -->
+                <!-- ========================================================= -->
+                <section id="qr-tool" class="tool-panel hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-sm space-y-6">
+                        <div>
+                            <h1 class="text-xl sm:text-2xl font-bold">Автономный QR-генератор</h1>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Встроенный движок QR Version 1–10 с коррекцией ошибок Рида-Соломона. Поддерживает длинные URL и кириллицу без отправки текста на сервер.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                            <div class="lg:col-span-7 space-y-4">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1.5">
+                                        <label for="qr-text" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Текст или ссылка</label>
+                                        <span id="qr-byte-counter" class="font-mono text-xs text-slate-400">0 / 271 байт</span>
+                                    </div>
+                                    <textarea id="qr-text" rows="4" placeholder="Введите ссылку, текст на русском языке или данные Wi-Fi..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm focus:outline-none focus:border-indigo-500 transition">https://localtools.offline/привет-мир</textarea>
+                                </div>
+
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    <div>
+                                        <label for="qr-fg" class="block text-xs font-semibold text-slate-500 mb-1">Цвет кода</label>
+                                        <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-1.5">
+                                            <input type="color" id="qr-fg" value="#0f172a" class="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent">
+                                            <span id="qr-fg-hex" class="font-mono text-xs">#0F172A</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="qr-bg" class="block text-xs font-semibold text-slate-500 mb-1">Цвет фона</label>
+                                        <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-1.5">
+                                            <input type="color" id="qr-bg" value="#ffffff" class="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent">
+                                            <span id="qr-bg-hex" class="font-mono text-xs">#FFFFFF</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-span-2 sm:col-span-1">
+                                        <label for="qr-size" class="block text-xs font-semibold text-slate-500 mb-1">Размер PNG</label>
+                                        <select id="qr-size" class="w-full h-[46px] px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm font-mono">
+                                            <option value="256">256 × 256 px</option>
+                                            <option value="512" selected>512 × 512 px</option>
+                                            <option value="1024">1024 × 1024 px</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div id="qr-status-msg" class="text-xs font-mono text-emerald-600 dark:text-emerald-400">
+                                    Версия матрицы: QR v3 (29×29 модулей, ECC-L)
+                                </div>
+
+                                <div class="flex flex-wrap gap-2.5 pt-1">
+                                    <button type="button" id="qr-download-btn" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition">
+                                        ⬇️ Скачать PNG
+                                    </button>
+                                    <button type="button" id="qr-invert-btn" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition">
+                                        🔄 Инвертировать цвета
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="lg:col-span-5 flex flex-col items-center justify-center p-6 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800">
+                                <canvas id="qr-canvas" class="w-56 h-56 rounded-xl shadow-md bg-white"></canvas>
+                                <span class="text-[11px] text-slate-400 mt-3 text-center">Наведите камеру смартфона для мгновенной проверки</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ========================================================= -->
+                <!-- 3. ТЕСТ ЭКРАНА И БИТЫХ ПИКСЕЛЕЙ                           -->
+                <!-- ========================================================= -->
+                <section id="screen-tool" class="tool-panel hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-sm space-y-6">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <h1 class="text-xl sm:text-2xl font-bold">Тест экрана и поиск битых пикселей</h1>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Характеристики вашего дисплея и полноэкранная заливка чистыми цветами (работает как в режиме десктопа, так и в режиме телефона).</p>
+                            </div>
+                            <button type="button" id="start-pixel-test-btn" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition">
+                                🖥️ Запустить тест на весь экран
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-xs text-slate-500 block">Разрешение экрана</span>
+                                <span id="scr-res" class="font-mono font-bold text-base mt-1 block">—</span>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-xs text-slate-500 block">Окно браузера (Viewport)</span>
+                                <span id="scr-viewport" class="font-mono font-bold text-base mt-1 block">—</span>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-xs text-slate-500 block">Плотность (DPR)</span>
+                                <span id="scr-dpr" class="font-mono font-bold text-base mt-1 block">—</span>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-xs text-slate-500 block">Глубина цвета</span>
+                                <span id="scr-depth" class="font-mono font-bold text-base mt-1 block">—</span>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-xs text-slate-500 block">Ориентация</span>
+                                <span id="scr-orient" class="font-mono font-bold text-base mt-1 block">—</span>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-xs text-slate-500 block">Сенсорный ввод</span>
+                                <span id="scr-touch" class="font-mono font-bold text-base mt-1 block">—</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-2.5">Быстрый запуск с выбранного цвета</span>
+                            <div id="pixel-swatches" class="grid grid-cols-4 sm:grid-cols-8 gap-2.5"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ========================================================= -->
+                <!-- 4. ПРОВЕРКА МИКРОФОНА                                     -->
+                <!-- ========================================================= -->
+                <section id="mic-tool" class="tool-panel hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-sm space-y-6">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <h1 class="text-xl sm:text-2xl font-bold">Проверка микрофона и запись звука</h1>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Живой анализатор сигнала через Web Audio API и локальная запись 5-секундного тестового фрагмента.</p>
+                            </div>
+                            <button type="button" id="mic-toggle-btn" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition">
+                                🎙️ Включить микрофон
+                            </button>
+                        </div>
+
+                        <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4 space-y-3">
+                            <div class="flex justify-between items-center text-xs">
+                                <span id="mic-status-label" class="text-slate-400 font-medium">Микрофон отключен</span>
+                                <span id="mic-level-text" class="font-mono text-indigo-400">Уровень: 0%</span>
+                            </div>
+                            <canvas id="mic-canvas" class="w-full h-36 block rounded-xl bg-slate-900/80"></canvas>
+                            <div class="w-full h-2.5 rounded-full bg-slate-800 overflow-hidden">
+                                <div id="mic-level-bar" class="h-full w-0 bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500 transition-all duration-75"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-3 pt-1">
+                            <button type="button" id="mic-record-btn" disabled class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:pointer-events-none text-white text-sm font-semibold transition">
+                                🔴 Записать тест (5 сек)
+                            </button>
+                            <audio id="mic-playback" controls class="hidden h-10 rounded-xl"></audio>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ========================================================= -->
+                <!-- 5. ПАРОЛИ И SHA-256                                       -->
+                <!-- ========================================================= -->
+                <section id="pass-tool" class="tool-panel hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-sm space-y-6">
+                        <div>
+                            <h1 class="text-xl sm:text-2xl font-bold">Генератор паролей и хеш SHA-256</h1>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Криптографически стойкий генератор на базе <code class="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">crypto.getRandomValues</code> и локальный расчет контрольных сумм.</p>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-4">
+                            <div class="flex items-center gap-2">
+                                <input type="text" id="pass-output" readonly class="flex-1 px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-mono text-sm sm:text-base font-bold select-all focus:outline-none">
+                                <button type="button" id="pass-copy-btn" class="px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition">Копировать</button>
+                                <button type="button" id="pass-regen-btn" aria-label="Сгенерировать новый" class="p-2.5 rounded-xl bg-slate-200/80 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 transition">🔄</button>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <div class="flex justify-between text-xs">
+                                    <span id="pass-strength-label" class="font-semibold text-emerald-500">Надежный пароль</span>
+                                    <span id="pass-entropy-val" class="font-mono text-slate-500">Энтропия: — бит</span>
+                                </div>
+                                <div class="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                                    <div id="pass-strength-bar" class="h-full w-4/5 bg-emerald-500 transition-all duration-200"></div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3 pt-1">
+                                <div>
+                                    <div class="flex justify-between text-xs font-semibold mb-1">
+                                        <span class="text-slate-500">Длина пароля</span>
+                                        <span id="pass-len-val" class="font-mono text-indigo-600 dark:text-indigo-400">18 символов</span>
+                                    </div>
+                                    <input type="range" id="pass-len" min="8" max="64" value="18" class="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer accent-indigo-600">
+                                </div>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                                    <label class="flex items-center gap-2 p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer">
+                                        <input type="checkbox" id="pass-upper" checked class="accent-indigo-600">
+                                        <span>A-Z (Заглавные)</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer">
+                                        <input type="checkbox" id="pass-lower" checked class="accent-indigo-600">
+                                        <span>a-z (Строчные)</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer">
+                                        <input type="checkbox" id="pass-num" checked class="accent-indigo-600">
+                                        <span>0-9 (Цифры)</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer">
+                                        <input type="checkbox" id="pass-sym" checked class="accent-indigo-600">
+                                        <span>!@#$% (Символы)</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-3">
+                            <h2 class="text-sm font-bold">Калькулятор SHA-256 (текст или файл)</h2>
+                            <textarea id="sha-input" rows="2" placeholder="Введите текст для расчета SHA-256..." class="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm focus:outline-none focus:border-indigo-500"></textarea>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <label class="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500 text-xs font-semibold cursor-pointer transition">
+                                    📄 Выбрать файл для хеширования
+                                    <input type="file" id="sha-file-input" class="hidden">
+                                </label>
+                                <span id="sha-source-label" class="text-xs text-slate-500">Источник: текстовое поле</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="text" id="sha-output" readonly placeholder="SHA-256 хеш появится здесь..." class="flex-1 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-mono text-xs select-all">
+                                <button type="button" id="sha-copy-btn" class="px-3.5 py-2 rounded-xl bg-slate-200/80 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition">Копировать</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ========================================================= -->
+                <!-- 6. EXIF И МЕТАДАННЫЕ                                      -->
+                <!-- ========================================================= -->
+                <section id="exif-tool" class="tool-panel hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-sm space-y-6">
+                        <div>
+                            <h1 class="text-xl sm:text-2xl font-bold">Просмотр и удаление EXIF-метаданных</h1>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Извлекает модель камеры, параметры съемки и GPS-координаты из JPEG, а также создает полностью очищенную копию снимка (с сохранением прозрачности PNG).</p>
+                        </div>
+
+                        <div id="exif-dropzone" class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 rounded-2xl p-8 text-center cursor-pointer transition bg-slate-50/60 dark:bg-slate-950/50">
+                            <input type="file" id="exif-input" accept="image/jpeg,image/png,image/webp" class="hidden">
+                            <div class="text-4xl mb-3">🕵️</div>
+                            <p class="font-semibold text-base">Выберите фотографию для проверки скрытых данных</p>
+                            <p class="text-xs text-slate-500 mt-1">JPEG (полный разбор EXIF/GPS), PNG и WebP (очистка метаданных)</p>
+                        </div>
+
+                        <div id="exif-results" class="hidden space-y-4">
+                            <div id="exif-gps-banner" class="hidden p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs sm:text-sm">
+                                🚨 <strong>Внимание! В снимке обнаружены GPS-координаты:</strong> <span id="exif-gps-coords" class="font-mono font-bold"></span>. Перед публикацией в сети рекомендуем скачать очищенную копию.
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="exif-tags-grid"></div>
+
+                            <div class="flex flex-wrap gap-3 pt-2">
+                                <button type="button" id="exif-clean-download-btn" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition">
+                                    🧹 Скачать без метаданных
+                                </button>
+                                <button type="button" id="exif-reset-btn" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition">
+                                    Проверить другой файл
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ========================================================= -->
+                <!-- 7. СРАВНЕНИЕ ТЕКСТА (LCS DIFF)                            -->
+                <!-- ========================================================= -->
+                <section id="diff-tool" class="tool-panel hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-sm space-y-6">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <h1 class="text-xl sm:text-2xl font-bold">Построчное сравнение текста (Diff)</h1>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Алгоритм поиска наибольшей общей подпоследовательности (LCS) для точного выявления вставок и удалений.</p>
+                            </div>
+                            <label class="flex items-center gap-2 text-xs font-medium cursor-pointer bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-xl">
+                                <input type="checkbox" id="diff-ignore-ws" class="accent-indigo-600">
+                                <span>Игнорировать лишние пробелы</span>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="diff-left" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Исходный текст (A)</label>
+                                <textarea id="diff-left" rows="6" class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-mono text-xs focus:outline-none focus:border-indigo-500">Сервер: nginx/1.24
+Порт: 80
+Кэширование: выключено
+Таймаут: 30s</textarea>
+                            </div>
+                            <div>
+                                <label for="diff-right" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Измененный текст (B)</label>
+                                <textarea id="diff-right" rows="6" class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-mono text-xs focus:outline-none focus:border-indigo-500">Сервер: nginx/1.26
+Порт: 443
+SSL: включен
+Кэширование: включено
+Таймаут: 30s</textarea>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <button type="button" id="diff-run-btn" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition">
+                                ⚖️ Сравнить тексты
+                            </button>
+                            <div id="diff-stats" class="flex items-center gap-3 font-mono text-xs">
+                                <span class="text-emerald-500">+0 добавлено</span>
+                                <span class="text-rose-500">-0 удалено</span>
+                                <span class="text-slate-400">0 без изменений</span>
+                            </div>
+                        </div>
+
+                        <div id="diff-output" class="rounded-2xl bg-slate-950 border border-slate-800 p-4 font-mono text-xs overflow-x-auto space-y-1 max-h-80 overflow-y-auto"></div>
+                    </div>
+                </section>
+
+                <!-- ========================================================= -->
+                <!-- 8. JSON / BASE64 / URL / JWT                              -->
+                <!-- ========================================================= -->
+                <section id="dev-tool" class="tool-panel hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-sm space-y-5">
+                        <div>
+                            <h1 class="text-xl sm:text-2xl font-bold">JSON, Base64, URL и JWT-декодер</h1>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Локальная обработка структур данных и безопасный разбор JWT-токенов без отправки ключей в сеть.</p>
+                        </div>
+
+                        <div class="flex flex-wrap gap-1.5 p-1 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 w-fit">
+                            <button type="button" data-devmode="json" class="dev-subtab px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm">JSON</button>
+                            <button type="button" data-devmode="base64" class="dev-subtab px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400">Base64</button>
+                            <button type="button" data-devmode="url" class="dev-subtab px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400">URL Encode</button>
+                            <button type="button" data-devmode="jwt" class="dev-subtab px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400">JWT Декодер</button>
+                        </div>
+
+                        <div>
+                            <label for="dev-input" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Входные данные</label>
+                            <textarea id="dev-input" rows="5" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-mono text-xs focus:outline-none focus:border-indigo-500">{"project":"LocalTools","offline":true,"tools":11,"lang":"ru"}</textarea>
+                        </div>
+
+                        <div id="dev-actions" class="flex flex-wrap gap-2"></div>
+
+                        <div id="dev-status" class="hidden p-3 rounded-xl text-xs font-mono"></div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1.5">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Результат</span>
+                                <button type="button" id="dev-copy-btn" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Копировать</button>
+                            </div>
+                            <pre id="dev-output" class="p-4 rounded-2xl bg-slate-950 text-slate-100 border border-slate-800 font-mono text-xs overflow-x-auto whitespace-pre-wrap break-all min-h-[110px]"></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ========================================================= -->
+                <!-- 9. ТЕКСТ И ОЧИСТКА                                        -->
+                <!-- ========================================================= -->
+                <section id="text-tool" class="tool-panel hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-sm space-y-5">
+                        <div>
+                            <h1 class="text-xl sm:text-2xl font-bold">Анализ и очистка текста</h1>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Подсчет статистики в реальном времени, удаление дубликатов строк, чистка HTML-тегов и транслитерация.</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-[11px] text-slate-500 block">Символы (без пробелов)</span>
+                                <span id="txt-stat-chars" class="font-mono font-bold text-base mt-0.5 block">0 (0)</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-[11px] text-slate-500 block">Слова</span>
+                                <span id="txt-stat-words" class="font-mono font-bold text-base mt-0.5 block">0</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-[11px] text-slate-500 block">Строки</span>
+                                <span id="txt-stat-lines" class="font-mono font-bold text-base mt-0.5 block">0</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-[11px] text-slate-500 block">Время чтения</span>
+                                <span id="txt-stat-read" class="font-mono font-bold text-base mt-0.5 block">0 сек</span>
+                            </div>
+                        </div>
+
+                        <textarea id="txt-editor" rows="7" placeholder="Вставьте текст или список для обработки..." class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm focus:outline-none focus:border-indigo-500"></textarea>
+
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" data-txtact="dedupe" class="txt-act-btn px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition">Удалить дубликаты строк</button>
+                            <button type="button" data-txtact="spaces" class="txt-act-btn px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition">Убрать лишние пробелы</button>
+                            <button type="button" data-txtact="empty-lines" class="txt-act-btn px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition">Удалить пустые строки</button>
+                            <button type="button" data-txtact="strip-html" class="txt-act-btn px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition">Очистить HTML-теги</button>
+                            <button type="button" data-txtact="sort" class="txt-act-btn px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition">Сортировать А–Я</button>
+                            <button type="button" data-txtact="translit" class="txt-act-btn px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition">Транслит (RU → EN)</button>
+                            <button type="button" id="txt-copy-btn" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition ml-auto">Копировать</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ========================================================= -->
+                <!-- 10. АУДИО И ТОН-ГЕНЕРАТОР + TAP TEMPO (BPM)               -->
+                <!-- ========================================================= -->
+                <section id="audio-tool" class="tool-panel hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-sm space-y-6">
+                        <div>
+                            <h1 class="text-xl sm:text-2xl font-bold">Аудио тон-генератор и Tap Tempo</h1>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Проверка наушников, стереоканалов и сабвуферов на чистых волнах (20 Гц – 16 кГц), а также ручной определитель темпа BPM.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                            <div class="lg:col-span-7 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Частота сигнала</span>
+                                    <span id="tone-freq-val" class="font-mono text-xl font-extrabold text-indigo-600 dark:text-indigo-400">440 Гц</span>
+                                </div>
+                                <input type="range" id="tone-freq" min="20" max="16000" value="440" class="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer accent-indigo-600">
+
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button type="button" data-freq="60" class="tone-preset px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-mono hover:border-indigo-500">60 Гц (Бас)</button>
+                                    <button type="button" data-freq="440" class="tone-preset px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-mono hover:border-indigo-500">440 Гц (Ля)</button>
+                                    <button type="button" data-freq="1000" class="tone-preset px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-mono hover:border-indigo-500">1 кГц</button>
+                                    <button type="button" data-freq="8000" class="tone-preset px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-mono hover:border-indigo-500">8 кГц</button>
+                                    <button type="button" data-freq="14000" class="tone-preset px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-mono hover:border-indigo-500">14 кГц</button>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label for="tone-wave" class="block text-xs font-semibold text-slate-500 mb-1">Форма волны</label>
+                                        <select id="tone-wave" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold">
+                                            <option value="sine">Синусоида (Sine)</option>
+                                            <option value="square">Прямоугольная (Square)</option>
+                                            <option value="triangle">Треугольная (Triangle)</option>
+                                            <option value="sawtooth">Пилообразная (Sawtooth)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="tone-pan" class="block text-xs font-semibold text-slate-500 mb-1">Стерео баланс</label>
+                                        <select id="tone-pan" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold">
+                                            <option value="0">Центр (Оба канала)</option>
+                                            <option value="-1">Только левый канал (L)</option>
+                                            <option value="1">Только правый канал (R)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="pt-1">
+                                    <button type="button" id="tone-toggle-btn" class="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition">
+                                        ▶️ Включить звук
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="lg:col-span-5 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-4">
+                                <div>
+                                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 block">Определитель темпа (Tap Tempo)</span>
+                                    <div class="mt-2 flex items-baseline gap-2">
+                                        <span id="bpm-val" class="font-mono text-4xl font-extrabold text-emerald-500">—</span>
+                                        <span class="font-mono text-xs text-slate-400">BPM (ударов/мин)</span>
+                                    </div>
+                                    <p id="bpm-taps-info" class="text-xs text-slate-500 mt-1">Нажимайте кнопку в такт музыке (или клавишу Пробел)</p>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <button type="button" id="bpm-tap-btn" class="w-full py-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-base shadow-md transition select-none">
+                                        🥁 ТАП В РИТМ
+                                    </button>
+                                    <button type="button" id="bpm-reset-btn" class="w-full py-2 rounded-xl bg-slate-200/70 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition">
+                                        Сбросить темп
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ========================================================= -->
+                <!-- 11. ТЕСТ FPS И ГЕРЦОВКИ ЭКРАНА (UFO + ГРАФИК + СТРЕСС)    -->
+                <!-- ========================================================= -->
+                <section id="fps-tool" class="tool-panel hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-sm space-y-6">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <h1 class="text-xl sm:text-2xl font-bold">Тест FPS, герцовки экрана и плавности</h1>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Замер частоты обновления дисплея через <code class="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">requestAnimationFrame</code>, детектор микрофризов и стресс-тест рендеринга.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" id="fps-pause-btn" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition">⏸ Пауза</button>
+                                <button type="button" id="fps-reset-btn" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition">🔄 Сброс</button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                            <div class="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/25 col-span-2 sm:col-span-1">
+                                <span class="text-[11px] font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block">Текущий FPS</span>
+                                <div class="flex items-baseline gap-1.5 mt-1">
+                                    <span id="fps-current-val" class="font-mono text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">—</span>
+                                    <span id="fps-hz-est" class="font-mono text-xs text-slate-500 dark:text-slate-400">~60 Гц</span>
+                                </div>
+                            </div>
+                            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Средний FPS</span>
+                                <span id="fps-avg-val" class="font-mono text-xl font-bold mt-1 block">—</span>
+                            </div>
+                            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Мин / Макс</span>
+                                <span id="fps-minmax-val" class="font-mono text-base font-bold mt-1.5 block">— / —</span>
+                            </div>
+                            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Frame Time</span>
+                                <span id="fps-frametime-val" class="font-mono text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 block">— мс</span>
+                            </div>
+                            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Стабильность</span>
+                                <span id="fps-jitter-val" class="font-mono text-sm font-semibold mt-1.5 block">—</span>
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
+                            <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 mb-2">
+                                <span class="font-semibold text-slate-200">График времени кадра (Frame Time, мс) — детектор микрофризов</span>
+                                <div class="flex items-center gap-3 font-mono text-[11px]">
+                                    <span class="text-emerald-400">● 120 Гц (8.3 мс)</span>
+                                    <span class="text-indigo-400">● 60 Гц (16.7 мс)</span>
+                                    <span class="text-rose-400">● Просадка (&gt;33 мс)</span>
+                                </div>
+                            </div>
+                            <canvas id="fps-graph-canvas" class="w-full h-32 block rounded-xl"></canvas>
+                        </div>
+
+                        <div class="rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 p-4 space-y-3">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h2 class="text-sm font-bold">Визуальный тест плавности (UFO Comparison)</h2>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Сравнение нативной частоты экрана с ограниченными 30 FPS и 15 FPS</p>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <div class="flex items-center gap-2">
+                                        <label for="ufo-speed" class="text-xs text-slate-500">Скорость:</label>
+                                        <input type="range" id="ufo-speed" min="150" max="1200" step="50" value="450" class="w-24 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer accent-indigo-600">
+                                        <span id="ufo-speed-val" class="font-mono text-xs w-14">450 px/с</span>
+                                    </div>
+                                    <label class="flex items-center gap-1.5 text-xs cursor-pointer">
+                                        <input type="checkbox" id="ufo-grid-toggle" checked class="accent-indigo-600 rounded">
+                                        <span>Сетка</span>
+                                    </label>
+                                    <label class="flex items-center gap-1.5 text-xs cursor-pointer">
+                                        <input type="checkbox" id="ufo-trail-toggle" class="accent-indigo-600 rounded">
+                                        <span>Шлейф</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <canvas id="ufo-canvas" class="w-full h-44 block rounded-xl bg-slate-950 border border-slate-800"></canvas>
+                        </div>
+
+                        <div class="rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 p-4 space-y-3">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h2 class="text-sm font-bold">Стресс-тест рендеринга Canvas</h2>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Нагрузите графический конвейер браузера анимированными частицами с физикой отскока</p>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <button type="button" data-particles="0" class="stress-preset-btn px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold bg-indigo-600 text-white">Выкл (0)</button>
+                                    <button type="button" data-particles="250" class="stress-preset-btn px-2.5 py-1.5 rounded-lg text-xs font-mono bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500">250</button>
+                                    <button type="button" data-particles="1500" class="stress-preset-btn px-2.5 py-1.5 rounded-lg text-xs font-mono bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500">1 500</button>
+                                    <button type="button" data-particles="5000" class="stress-preset-btn px-2.5 py-1.5 rounded-lg text-xs font-mono bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500">5 000</button>
+                                    <button type="button" data-particles="10000" class="stress-preset-btn px-2.5 py-1.5 rounded-lg text-xs font-mono bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500">10 000</button>
+                                </div>
+                            </div>
+                            <div id="stress-canvas-wrap" class="hidden">
+                                <canvas id="stress-canvas" class="w-full h-44 block rounded-xl bg-slate-950 border border-slate-800"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-[11px] text-slate-500 block">Потоки CPU</span>
+                                <span id="hw-cpu" class="font-mono font-semibold text-xs mt-0.5 block">—</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-[11px] text-slate-500 block">ОЗУ устройства</span>
+                                <span id="hw-ram" class="font-mono font-semibold text-xs mt-0.5 block">—</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-[11px] text-slate-500 block">Экран и DPR</span>
+                                <span id="hw-screen" class="font-mono font-semibold text-xs mt-0.5 block">—</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-[11px] text-slate-500 block">Графический ускоритель</span>
+                                <span id="hw-gpu" class="font-mono font-semibold text-xs mt-0.5 block truncate" title="">—</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+
+        <!-- Подвал -->
+        <footer class="border-t border-slate-200 dark:border-slate-800/80 py-6 mt-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
+                <p>© 2026 LocalTools — 11 клиентских оффлайн-утилит в одном файле.</p>
+                <p class="font-mono">Zero-Backend • 100% Offline • No Tracking</p>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- АВТОНОМНЫЙ ГЕНЕРАТОР QR-КОДОВ VERSION 1–10 (ECC-L, ДО 271 БАЙТА)      -->
+    <!-- ===================================================================== -->
+    <script>
+        const PureQR = (() => {
+            // Таблица параметров для Version 1..10 с уровнем коррекции ошибок L (ECC-L)
+            const VERSION_SPECS = [
+                null,
+                { ver: 1, size: 21, totalCodewords: 26, dataCodewords: 19, ecPerBlock: 7, blocks: [19], align: [] },
+                { ver: 2, size: 25, totalCodewords: 44, dataCodewords: 34, ecPerBlock: 10, blocks: [34], align: [6, 18] },
+                { ver: 3, size: 29, totalCodewords: 70, dataCodewords: 55, ecPerBlock: 15, blocks: [55], align: [6, 22] },
+                { ver: 4, size: 33, totalCodewords: 100, dataCodewords: 80, ecPerBlock: 20, blocks: [80], align: [6, 26] },
+                { ver: 5, size: 37, totalCodewords: 134, dataCodewords: 108, ecPerBlock: 26, blocks: [108], align: [6, 30] },
+                { ver: 6, size: 41, totalCodewords: 172, dataCodewords: 136, ecPerBlock: 18, blocks: [68, 68], align: [6, 34] },
+                { ver: 7, size: 45, totalCodewords: 196, dataCodewords: 156, ecPerBlock: 20, blocks: [78, 78], align: [6, 22, 38] },
+                { ver: 8, size: 49, totalCodewords: 242, dataCodewords: 194, ecPerBlock: 24, blocks: [97, 97], align: [6, 24, 42] },
+                { ver: 9, size: 53, totalCodewords: 292, dataCodewords: 232, ecPerBlock: 30, blocks: [116, 116], align: [6, 26, 46] },
+                { ver: 10, size: 57, totalCodewords: 346, dataCodewords: 274, ecPerBlock: 18, blocks: [68, 68, 69, 69], align: [6, 28, 50] }
+            ];
+
+            // Предвычисленные 15-битные строки формата для ECC-L (01) и масок 0..7
+            const FORMAT_INFO_L = [
+                0x77c4, 0x72f3, 0x7daa, 0x789d, 0x662f, 0x6318, 0x6c41, 0x6976
+            ];
+
+            // 18-битные строки версии для Version 7..10
+            const VERSION_INFO = {
+                7: 0x07c94,
+                8: 0x085bc,
+                9: 0x09a99,
+                10: 0x0a4d3
+            };
+
+            // Арифметика поля Галуа GF(256) с полиномом 0x11D
+            const GF_EXP = new Uint8Array(512);
+            const GF_LOG = new Uint8Array(256);
+            (() => {
+                let x = 1;
+                for (let i = 0; i < 255; i++) {
+                    GF_EXP[i] = x;
+                    GF_LOG[x] = i;
+                    x <<= 1;
+                    if (x & 0x100) x ^= 0x11d;
+                }
+                for (let i = 255; i < 512; i++) {
+                    GF_EXP[i] = GF_EXP[i - 255];
+                }
+            })();
+
+            function gfMul(x, y) {
+                if (x === 0 || y === 0) return 0;
+                return GF_EXP[GF_LOG[x] + GF_LOG[y]];
+            }
+
+            function rsGeneratorPoly(degree) {
+                let poly = [1];
+                for (let i = 0; i < degree; i++) {
+                    const next = new Array(poly.length + 1).fill(0);
+                    const factor = GF_EXP[i];
+                    for (let j = 0; j < poly.length; j++) {
+                        next[j] ^= poly[j];
+                        next[j + 1] ^= gfMul(poly[j], factor);
+                    }
+                    poly = next;
+                }
+                return poly;
+            }
+
+            function rsComputeECC(data, ecCount) {
+                const gen = rsGeneratorPoly(ecCount);
+                const msg = new Uint8Array(data.length + ecCount);
+                msg.set(data);
+                for (let i = 0; i < data.length; i++) {
+                    const coef = msg[i];
+                    if (coef !== 0) {
+                        for (let j = 1; j < gen.length; j++) {
+                            msg[i + j] ^= gfMul(gen[j], coef);
+                        }
+                    }
+                }
+                return msg.slice(data.length);
+            }
+
+            function encodeDataCodewords(bytes, spec) {
+                const bits = [];
+                const pushBits = (val, len) => {
+                    for (let i = len - 1; i >= 0; i--) {
+                        bits.push((val >>> i) & 1);
+                    }
+                };
+
+                // Byte mode indicator (0100) + длина (8 бит для ver 1..9, 16 бит для ver 10+)
+                pushBits(0b0100, 4);
+                pushBits(bytes.length, spec.ver >= 10 ? 16 : 8);
+                for (let i = 0; i < bytes.length; i++) {
+                    pushBits(bytes[i], 8);
+                }
+
+                const maxBits = spec.dataCodewords * 8;
+                const termLen = Math.min(4, maxBits - bits.length);
+                pushBits(0, termLen);
+
+                while (bits.length % 8 !== 0) {
+                    bits.push(0);
+                }
+
+                const codewords = [];
+                for (let i = 0; i < bits.length; i += 8) {
+                    let b = 0;
+                    for (let j = 0; j < 8; j++) b = (b << 1) | bits[i + j];
+                    codewords.push(b);
+                }
+
+                const pads = [0xec, 0x11];
+                let padIdx = 0;
+                while (codewords.length < spec.dataCodewords) {
+                    codewords.push(pads[padIdx % 2]);
+                    padIdx++;
+                }
+                return new Uint8Array(codewords);
+            }
+
+            function buildFinalMessage(dataCodewords, spec) {
+                const dataBlocks = [];
+                const ecBlocks = [];
+                let offset = 0;
+
+                for (const blockLen of spec.blocks) {
+                    const slice = dataCodewords.slice(offset, offset + blockLen);
+                    offset += blockLen;
+                    dataBlocks.push(slice);
+                    ecBlocks.push(rsComputeECC(slice, spec.ecPerBlock));
+                }
+
+                const result = [];
+                const maxDataLen = Math.max(...spec.blocks);
+                for (let i = 0; i < maxDataLen; i++) {
+                    for (const blk of dataBlocks) {
+                        if (i < blk.length) result.push(blk[i]);
+                    }
+                }
+                for (let i = 0; i < spec.ecPerBlock; i++) {
+                    for (const ec of ecBlocks) {
+                        if (i < ec.length) result.push(ec[i]);
+                    }
+                }
+                return result;
+            }
+
+            function createMatrix(spec) {
+                const size = spec.size;
+                const modules = Array.from({ length: size }, () => new Uint8Array(size));
+                const isFunction = Array.from({ length: size }, () => new Uint8Array(size));
+
+                const setFunc = (r, c, dark) => {
+                    if (r >= 0 && r < size && c >= 0 && c < size) {
+                        modules[r][c] = dark ? 1 : 0;
+                        isFunction[r][c] = 1;
+                    }
+                };
+
+                // Поисковые узоры (Finder patterns) + разделители
+                const placeFinder = (row, col) => {
+                    for (let r = -1; r <= 7; r++) {
+                        for (let c = -1; c <= 7; c++) {
+                            const rr = row + r;
+                            const cc = col + c;
+                            if (rr < 0 || rr >= size || cc < 0 || cc >= size) continue;
+                            const isDark = (r >= 0 && r <= 6 && (c === 0 || c === 6)) ||
+                                           (c >= 0 && c <= 6 && (r === 0 || r === 6)) ||
+                                           (r >= 2 && r <= 4 && c >= 2 && c <= 4);
+                            setFunc(rr, cc, isDark);
+                        }
+                    }
+                };
+                placeFinder(0, 0);
+                placeFinder(0, size - 7);
+                placeFinder(size - 7, 0);
+
+                // Шаблоны выравнивания (Alignment patterns)
+                const centers = spec.align;
+                for (let i = 0; i < centers.length; i++) {
+                    for (let j = 0; j < centers.length; j++) {
+                        const cr = centers[i];
+                        const cc = centers[j];
+                        if ((i === 0 && j === 0) ||
+                            (i === 0 && j === centers.length - 1) ||
+                            (i === centers.length - 1 && j === 0)) {
+                            continue;
+                        }
+                        for (let dr = -2; dr <= 2; dr++) {
+                            for (let dc = -2; dc <= 2; dc++) {
+                                const dark = Math.max(Math.abs(dr), Math.abs(dc)) !== 1;
+                                setFunc(cr + dr, cc + dc, dark);
+                            }
+                        }
+                    }
+                }
+
+                // Линии синхронизации (Timing patterns)
+                for (let i = 8; i < size - 8; i++) {
+                    if (!isFunction[6][i]) setFunc(6, i, i % 2 === 0);
+                    if (!isFunction[i][6]) setFunc(i, 6, i % 2 === 0);
+                }
+
+                // Резерв под информацию о формате и тёмный модуль
+                setFunc(size - 8, 8, true);
+                for (let i = 0; i < 9; i++) {
+                    if (!isFunction[8][i]) setFunc(8, i, false);
+                    if (!isFunction[i][8]) setFunc(i, 8, false);
+                }
+                for (let i = 0; i < 8; i++) {
+                    if (!isFunction[8][size - 1 - i]) setFunc(8, size - 1 - i, false);
+                    if (!isFunction[size - 1 - i][8]) setFunc(size - 1 - i, 8, false);
+                }
+
+                // Информация о версии для v7..v10
+                if (spec.ver >= 7) {
+                    const vBits = VERSION_INFO[spec.ver];
+                    for (let i = 0; i < 18; i++) {
+                        const bit = ((vBits >>> i) & 1) === 1;
+                        const a = Math.floor(i / 3);
+                        const b = size - 11 + (i % 3);
+                        setFunc(a, b, bit);
+                        setFunc(b, a, bit);
+                    }
+                }
+
+                return { modules, isFunction, size };
+            }
+
+            function placeDataBits(matrixObj, codewords) {
+                const { modules, isFunction, size } = matrixObj;
+                let bitIdx = 0;
+                const totalBits = codewords.length * 8;
+                let upward = true;
+
+                for (let right = size - 1; right >= 1; right -= 2) {
+                    if (right === 6) right = 5;
+                    for (let vert = 0; vert < size; vert++) {
+                        const r = upward ? (size - 1 - vert) : vert;
+                        for (let dx = 0; dx < 2; dx++) {
+                            const c = right - dx;
+                            if (!isFunction[r][c]) {
+                                let dark = false;
+                                if (bitIdx < totalBits) {
+                                    const cw = codewords[bitIdx >>> 3];
+                                    dark = ((cw >>> (7 - (bitIdx & 7))) & 1) === 1;
+                                    bitIdx++;
+                                }
+                                modules[r][c] = dark ? 1 : 0;
+                            }
+                        }
+                    }
+                    upward = !upward;
+                }
+            }
+
+            function applyMaskAndFormat(matrixObj, maskIdx) {
+                const { modules, isFunction, size } = matrixObj;
+                const maskFn = (r, c) => {
+                    switch (maskIdx) {
+                        case 0: return (r + c) % 2 === 0;
+                        case 1: return r % 2 === 0;
+                        case 2: return c % 3 === 0;
+                        case 3: return (r + c) % 3 === 0;
+                        case 4: return (Math.floor(r / 2) + Math.floor(c / 3)) % 2 === 0;
+                        case 5: return ((r * c) % 2) + ((r * c) % 3) === 0;
+                        case 6: return (((r * c) % 2) + ((r * c) % 3)) % 2 === 0;
+                        case 7: return (((r + c) % 2) + ((r * c) % 3)) % 2 === 0;
+                        default: return false;
+                    }
+                };
+
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        if (!isFunction[r][c] && maskFn(r, c)) {
+                            modules[r][c] ^= 1;
+                        }
+                    }
+                }
+
+                const fmt = FORMAT_INFO_L[maskIdx];
+                for (let i = 0; i <= 5; i++) modules[8][i] = (fmt >>> i) & 1;
+                modules[8][7] = (fmt >>> 6) & 1;
+                modules[8][8] = (fmt >>> 7) & 1;
+                modules[7][8] = (fmt >>> 8) & 1;
+                for (let i = 9; i < 15; i++) modules[14 - i][8] = (fmt >>> i) & 1;
+
+                for (let i = 0; i < 8; i++) modules[size - 1 - i][8] = (fmt >>> i) & 1;
+                for (let i = 8; i < 15; i++) modules[8][size - 15 + i] = (fmt >>> i) & 1;
+            }
+
+            function evaluatePenalty(modules, size) {
+                let penalty = 0;
+                for (let r = 0; r < size; r++) {
+                    let runColor = modules[r][0];
+                    let runLen = 1;
+                    for (let c = 1; c < size; c++) {
+                        if (modules[r][c] === runColor) {
+                            runLen++;
+                            if (runLen === 5) penalty += 3;
+                            else if (runLen > 5) penalty += 1;
+                        } else {
+                            runColor = modules[r][c];
+                            runLen = 1;
+                        }
+                    }
+                }
+                for (let c = 0; c < size; c++) {
+                    let runColor = modules[0][c];
+                    let runLen = 1;
+                    for (let r = 1; r < size; r++) {
+                        if (modules[r][c] === runColor) {
+                            runLen++;
+                            if (runLen === 5) penalty += 3;
+                            else if (runLen > 5) penalty += 1;
+                        } else {
+                            runColor = modules[r][c];
+                            runLen = 1;
+                        }
+                    }
+                }
+                for (let r = 0; r < size - 1; r++) {
+                    for (let c = 0; c < size - 1; c++) {
+                        const v = modules[r][c];
+                        if (v === modules[r][c + 1] && v === modules[r + 1][c] && v === modules[r + 1][c + 1]) {
+                            penalty += 3;
+                        }
+                    }
+                }
+                return penalty;
+            }
+
+            function generate(text) {
+                const utf8Bytes = new TextEncoder().encode(text || ' ');
+                // Находим минимальную подходящую версию (учитывая заголовок режима и длины)
+                let chosenSpec = null;
+                for (let v = 1; v <= 10; v++) {
+                    const spec = VERSION_SPECS[v];
+                    const headerBytes = v >= 10 ? 3 : 2;
+                    if (utf8Bytes.length + headerBytes <= spec.dataCodewords) {
+                        chosenSpec = spec;
+                        break;
+                    }
+                }
+                if (!chosenSpec) {
+                    throw new Error(`Текст слишком длинный (${utf8Bytes.length} байт). Максимум — 271 байт.`);
+                }
+
+                const dataCw = encodeDataCodewords(utf8Bytes, chosenSpec);
+                const finalMsg = buildFinalMessage(dataCw, chosenSpec);
+
+                let bestModules = null;
+                let bestScore = Infinity;
+
+                for (let mask = 0; mask < 8; mask++) {
+                    const mObj = createMatrix(chosenSpec);
+                    placeDataBits(mObj, finalMsg);
+                    applyMaskAndFormat(mObj, mask);
+                    const score = evaluatePenalty(mObj.modules, mObj.size);
+                    if (score < bestScore) {
+                        bestScore = score;
+                        bestModules = mObj.modules;
+                    }
+                }
+
+                return {
+                    modules: bestModules,
+                    size: chosenSpec.size,
+                    version: chosenSpec.ver,
+                    byteLength: utf8Bytes.length
+                };
+            }
+
+            return { generate };
+        })();
+    </script>
+
+    <!-- ===================================================================== -->
+    <!-- ОСНОВНАЯ ЛОГИКА ВСЕХ 11 ОФФЛАЙН-УТИЛИТ                                -->
+    <!-- ===================================================================== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // =================================================================
+            // 0. ТЕМА, TOAST, РЕЖИМ ТЕЛЕФОНА И НАВИГАЦИЯ
+            // =================================================================
+            const htmlEl = document.documentElement;
+            const themeToggle = document.getElementById('theme-toggle');
+            if (localStorage.getItem('localtools-theme') === 'light') {
+                htmlEl.classList.remove('dark');
+            }
+            themeToggle.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark');
+                localStorage.setItem('localtools-theme', htmlEl.classList.contains('dark') ? 'dark' : 'light');
+            });
+
+            const globalToast = document.getElementById('global-toast');
+            const toastIcon = document.getElementById('toast-icon');
+            const toastMsg = document.getElementById('toast-msg');
+            let toastTimer = null;
+
+            function showToast(message, isError = false) {
+                toastIcon.textContent = isError ? '⚠️' : '✅';
+                toastMsg.textContent = message;
+                globalToast.classList.remove('hidden');
+                globalToast.classList.add('flex');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    globalToast.classList.add('hidden');
+                    globalToast.classList.remove('flex');
+                }, 2600);
+            }
+
+            function copyToClipboard(text, successMsg = 'Скопировано в буфер обмена') {
+                if (!text) return;
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                try {
+                    document.execCommand('copy');
+                    showToast(successMsg);
+                } catch {
+                    showToast('Не удалось скопировать', true);
+                }
+                document.body.removeChild(ta);
+            }
+
+            function formatBytes(bytes) {
+                if (bytes === 0) return '0 Б';
+                const k = 1024;
+                const sizes = ['Б', 'КБ', 'МБ', 'ГБ'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+            }
+
+            // Переключатель Десктоп / Телефон
+            const viewDesktopBtn = document.getElementById('view-desktop-btn');
+            const viewMobileBtn = document.getElementById('view-mobile-btn');
+            const viewModeBadge = document.getElementById('view-mode-badge');
+            const mobileDeviceChrome = document.getElementById('mobile-device-chrome');
+            const mobileClockEl = document.getElementById('mobile-clock');
+
+            function updateMobileClock() {
+                const now = new Date();
+                mobileClockEl.textContent = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            }
+            updateMobileClock();
+            setInterval(updateMobileClock, 15000);
+
+            function setViewportMode(mode) {
+                const isMobile = mode === 'mobile';
+                document.body.classList.toggle('mobile-preview-mode', isMobile);
+
+                if (isMobile) {
+                    viewMobileBtn.classList.add('bg-white', 'dark:bg-slate-800', 'text-indigo-600', 'dark:text-indigo-400', 'shadow-sm');
+                    viewMobileBtn.classList.remove('text-slate-600', 'dark:text-slate-400');
+                    viewDesktopBtn.classList.remove('bg-white', 'dark:bg-slate-800', 'text-indigo-600', 'dark:text-indigo-400', 'shadow-sm');
+                    viewDesktopBtn.classList.add('text-slate-600', 'dark:text-slate-400');
+                    viewModeBadge.textContent = 'Mobile 396px';
+                    mobileDeviceChrome.classList.remove('hidden');
+                    mobileDeviceChrome.classList.add('flex');
+                } else {
+                    viewDesktopBtn.classList.add('bg-white', 'dark:bg-slate-800', 'text-indigo-600', 'dark:text-indigo-400', 'shadow-sm');
+                    viewDesktopBtn.classList.remove('text-slate-600', 'dark:text-slate-400');
+                    viewMobileBtn.classList.remove('bg-white', 'dark:bg-slate-800', 'text-indigo-600', 'dark:text-indigo-400', 'shadow-sm');
+                    viewMobileBtn.classList.add('text-slate-600', 'dark:text-slate-400');
+                    viewModeBadge.textContent = 'Desktop';
+                    mobileDeviceChrome.classList.add('hidden');
+                    mobileDeviceChrome.classList.remove('flex');
+                }
+
+                localStorage.setItem('localtools-viewmode', mode);
+                setTimeout(() => {
+                    resizeMicCanvas();
+                    resizeFpsCanvases();
+                    updateScreenSpecs();
+                }, 350);
+            }
+
+            viewDesktopBtn.addEventListener('click', () => setViewportMode('desktop'));
+            viewMobileBtn.addEventListener('click', () => setViewportMode('mobile'));
+            if (localStorage.getItem('localtools-viewmode') === 'mobile') {
+                setViewportMode('mobile');
+            }
+
+            // Переключение вкладок и поиск
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const toolPanels = document.querySelectorAll('.tool-panel');
+            const toolSearchInput = document.getElementById('tool-search');
+            const noToolsFound = document.getElementById('no-tools-found');
+
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-tab');
+                    tabBtns.forEach(b => {
+                        b.classList.remove('active', 'bg-white', 'dark:bg-slate-800', 'text-indigo-600', 'dark:text-indigo-400', 'shadow-sm');
+                        b.classList.add('text-slate-600', 'dark:text-slate-400');
+                    });
+                    btn.classList.add('active', 'bg-white', 'dark:bg-slate-800', 'text-indigo-600', 'dark:text-indigo-400', 'shadow-sm');
+                    btn.classList.remove('text-slate-600', 'dark:text-slate-400');
+
+                    toolPanels.forEach(panel => {
+                        panel.classList.toggle('hidden', panel.id !== targetId);
+                    });
+
+                    if (targetId === 'screen-tool') updateScreenSpecs();
+                    if (targetId === 'mic-tool') resizeMicCanvas();
+                    if (targetId === 'fps-tool') {
+                        resizeFpsCanvases();
+                        startFpsMonitor();
+                    }
+                });
+            });
+
+            toolSearchInput.addEventListener('input', () => {
+                const q = toolSearchInput.value.trim().toLowerCase();
+                let visibleCount = 0;
+                tabBtns.forEach(btn => {
+                    const text = btn.textContent.toLowerCase();
+                    const kw = (btn.getAttribute('data-keywords') || '').toLowerCase();
+                    const match = !q || text.includes(q) || kw.includes(q);
+                    btn.classList.toggle('hidden', !match);
+                    if (match) visibleCount++;
+                });
+                noToolsFound.classList.toggle('hidden', visibleCount > 0);
+            });
+
+            // =================================================================
+            // 1. ФОТО И СЖАТИЕ
+            // =================================================================
+            const imgDropzone = document.getElementById('img-dropzone');
+            const imgInput = document.getElementById('img-input');
+            const imgWorkspace = document.getElementById('img-workspace');
+            const imgFormat = document.getElementById('img-format');
+            const imgQuality = document.getElementById('img-quality');
+            const imgQualityVal = document.getElementById('img-quality-val');
+            const imgQualityWrap = document.getElementById('img-quality-wrap');
+            const imgPreview = document.getElementById('img-preview');
+            const imgHeavierWarn = document.getElementById('img-heavier-warn');
+
+            let currentImage = null;
+            let origFile = null;
+            let processedBlob = null;
+            let previewObjectUrl = null;
+
+            function processImage() {
+                if (!currentImage || !origFile) return;
+                const mime = imgFormat.value;
+                const quality = parseInt(imgQuality.value, 10) / 100;
+                imgQualityWrap.classList.toggle('opacity-40', mime === 'image/png');
+                imgQuality.disabled = mime === 'image/png';
+
+                const canvas = document.createElement('canvas');
+                canvas.width = currentImage.naturalWidth;
+                canvas.height = currentImage.naturalHeight;
+                const ctx = canvas.getContext('2d');
+
+                if (mime === 'image/jpeg') {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+                ctx.drawImage(currentImage, 0, 0);
+
+                canvas.toBlob(blob => {
+                    if (!blob) return;
+                    processedBlob = blob;
+                    if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+                    previewObjectUrl = URL.createObjectURL(blob);
+                    imgPreview.src = previewObjectUrl;
+
+                    document.getElementById('img-dims').textContent = `${currentImage.naturalWidth} × ${currentImage.naturalHeight} px`;
+                    document.getElementById('img-orig-size').textContent = formatBytes(origFile.size);
+                    document.getElementById('img-new-size').textContent = formatBytes(blob.size);
+
+                    const diff = origFile.size - blob.size;
+                    const pct = ((diff / origFile.size) * 100).toFixed(1);
+                    const savingsEl = document.getElementById('img-savings');
+
+                    if (diff >= 0) {
+                        savingsEl.textContent = `-${pct}% (${formatBytes(diff)})`;
+                        savingsEl.className = 'font-mono font-bold text-emerald-500';
+                        imgHeavierWarn.classList.add('hidden');
+                    } else {
+                        savingsEl.textContent = `+${Math.abs(pct)}% тяжелее`;
+                        savingsEl.className = 'font-mono font-bold text-amber-500';
+                        imgHeavierWarn.classList.remove('hidden');
+                    }
+                }, mime, quality);
+            }
+
+            function loadImageFile(file) {
+                if (!file || !file.type.startsWith('image/')) {
+                    showToast('Выберите корректный файл изображения', true);
+                    return;
+                }
+                origFile = file;
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = new Image();
+                    img.onload = () => {
+                        currentImage = img;
+                        imgDropzone.classList.add('hidden');
+                        imgWorkspace.classList.remove('hidden');
+                        processImage();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            imgDropzone.addEventListener('click', () => imgInput.click());
+            imgDropzone.addEventListener('dragover', e => { e.preventDefault(); imgDropzone.classList.add('border-indigo-500'); });
+            imgDropzone.addEventListener('dragleave', () => imgDropzone.classList.remove('border-indigo-500'));
+            imgDropzone.addEventListener('drop', e => {
+                e.preventDefault();
+                imgDropzone.classList.remove('border-indigo-500');
+                if (e.dataTransfer.files[0]) loadImageFile(e.dataTransfer.files[0]);
+            });
+            imgInput.addEventListener('change', e => {
+                if (e.target.files[0]) loadImageFile(e.target.files[0]);
+            });
+            imgFormat.addEventListener('change', processImage);
+            imgQuality.addEventListener('input', () => {
+                imgQualityVal.textContent = `${imgQuality.value}%`;
+                processImage();
+            });
+            document.getElementById('img-download-btn').addEventListener('click', () => {
+                if (!processedBlob || !origFile) return;
+                const ext = imgFormat.value.split('/')[1];
+                const baseName = origFile.name.replace(/\.[^.]+$/, '');
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(processedBlob);
+                a.download = `${baseName}_compressed.${ext}`;
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+            });
+            document.getElementById('img-reset-btn').addEventListener('click', () => {
+                currentImage = null;
+                origFile = null;
+                processedBlob = null;
+                imgInput.value = '';
+                imgWorkspace.classList.add('hidden');
+                imgDropzone.classList.remove('hidden');
+            });
+
+            // =================================================================
+            // 2. QR-ГЕНЕРАТОР (VERSION 1-10)
+            // =================================================================
+            const qrTextInput = document.getElementById('qr-text');
+            const qrFgInput = document.getElementById('qr-fg');
+            const qrBgInput = document.getElementById('qr-bg');
+            const qrFgHex = document.getElementById('qr-fg-hex');
+            const qrBgHex = document.getElementById('qr-bg-hex');
+            const qrSizeSelect = document.getElementById('qr-size');
+            const qrCanvas = document.getElementById('qr-canvas');
+            const qrByteCounter = document.getElementById('qr-byte-counter');
+            const qrStatusMsg = document.getElementById('qr-status-msg');
+
+            function renderQRCode() {
+                const rawText = qrTextInput.value;
+                const fg = qrFgInput.value;
+                const bg = qrBgInput.value;
+                qrFgHex.textContent = fg.toUpperCase();
+                qrBgHex.textContent = bg.toUpperCase();
+
+                try {
+                    const qr = PureQR.generate(rawText);
+                    qrByteCounter.textContent = `${qr.byteLength} / 271 байт`;
+                    qrByteCounter.className = 'font-mono text-xs text-slate-400';
+                    qrStatusMsg.textContent = `Версия матрицы: QR v${qr.version} (${qr.size}×${qr.size} модулей, ECC-L)`;
+                    qrStatusMsg.className = 'text-xs font-mono text-emerald-600 dark:text-emerald-400';
+
+                    const quietZone = 4;
+                    const totalModules = qr.size + quietZone * 2;
+                    const pxSize = parseInt(qrSizeSelect.value, 10) || 512;
+                    qrCanvas.width = pxSize;
+                    qrCanvas.height = pxSize;
+
+                    const ctx = qrCanvas.getContext('2d');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, pxSize, pxSize);
+
+                    const cellSize = pxSize / totalModules;
+                    ctx.fillStyle = fg;
+                    for (let r = 0; r < qr.size; r++) {
+                        for (let c = 0; c < qr.size; c++) {
+                            if (qr.modules[r][c]) {
+                                const x = Math.floor((c + quietZone) * cellSize);
+                                const y = Math.floor((r + quietZone) * cellSize);
+                                const w = Math.ceil((c + quietZone + 1) * cellSize) - x;
+                                const h = Math.ceil((r + quietZone + 1) * cellSize) - y;
+                                ctx.fillRect(x, y, w, h);
+                            }
+                        }
+                    }
+                } catch (err) {
+                    qrByteCounter.textContent = 'Превышен лимит 271 байт';
+                    qrByteCounter.className = 'font-mono text-xs text-rose-500';
+                    qrStatusMsg.textContent = err.message;
+                    qrStatusMsg.className = 'text-xs font-mono text-rose-500';
+                }
+            }
+
+            qrTextInput.addEventListener('input', renderQRCode);
+            qrFgInput.addEventListener('input', renderQRCode);
+            qrBgInput.addEventListener('input', renderQRCode);
+            qrSizeSelect.addEventListener('change', renderQRCode);
+            document.getElementById('qr-invert-btn').addEventListener('click', () => {
+                const tmp = qrFgInput.value;
+                qrFgInput.value = qrBgInput.value;
+                qrBgInput.value = tmp;
+                renderQRCode();
+            });
+            document.getElementById('qr-download-btn').addEventListener('click', () => {
+                const a = document.createElement('a');
+                a.href = qrCanvas.toDataURL('image/png');
+                a.download = `qrcode_${qrSizeSelect.value}px.png`;
+                a.click();
+                showToast('QR-код сохранен в PNG');
+            });
+            renderQRCode();
+
+            // =================================================================
+            // 3. ТЕСТ ЭКРАНА И БИТЫХ ПИКСЕЛЕЙ
+            // =================================================================
+            const pixelColors = [
+                { name: 'Красный', hex: '#FF0000' },
+                { name: 'Зеленый', hex: '#00FF00' },
+                { name: 'Синий', hex: '#0000FF' },
+                { name: 'Белый', hex: '#FFFFFF' },
+                { name: 'Черный', hex: '#000000' },
+                { name: 'Желтый', hex: '#FFFF00' },
+                { name: 'Голубой (Cyan)', hex: '#00FFFF' },
+                { name: 'Пурпурный (Magenta)', hex: '#FF00FF' }
+            ];
+            let currentPixelIdx = 0;
+            const pixelOverlay = document.getElementById('pixel-fullscreen-overlay');
+            const pixelColorName = document.getElementById('pixel-color-name');
+            const pixelOverlayHint = document.getElementById('pixel-overlay-hint');
+
+            function updateScreenSpecs() {
+                document.getElementById('scr-res').textContent = `${screen.width} × ${screen.height}`;
+                document.getElementById('scr-viewport').textContent = `${window.innerWidth} × ${window.innerHeight}`;
+                document.getElementById('scr-dpr').textContent = `${window.devicePixelRatio || 1}x`;
+                document.getElementById('scr-depth').textContent = `${screen.colorDepth} бит`;
+                document.getElementById('scr-orient').textContent = window.innerWidth >= window.innerHeight ? 'Альбомная' : 'Портретная';
+                document.getElementById('scr-touch').textContent = ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 'Поддерживается' : 'Нет (мышь)';
+            }
+            window.addEventListener('resize', updateScreenSpecs);
+            updateScreenSpecs();
+
+            function applyPixelTestColor(idx) {
+                currentPixelIdx = (idx + pixelColors.length) % pixelColors.length;
+                const item = pixelColors[currentPixelIdx];
+                pixelOverlay.style.backgroundColor = item.hex;
+                pixelColorName.textContent = `${item.name} (${item.hex}) — ${currentPixelIdx + 1} / ${pixelColors.length}`;
+                pixelOverlayHint.style.opacity = '1';
+            }
+
+            function openPixelTest(startIdx = 0) {
+                applyPixelTestColor(startIdx);
+                pixelOverlay.classList.remove('hidden');
+                pixelOverlay.classList.add('flex');
+                if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                }
+            }
+
+            function closePixelTest() {
+                pixelOverlay.classList.add('hidden');
+                pixelOverlay.classList.remove('flex');
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(() => {});
+                }
+            }
+
+            const swatchesContainer = document.getElementById('pixel-swatches');
+            pixelColors.forEach((c, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'h-12 rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm hover:scale-105 transition flex items-end p-1.5';
+                btn.style.backgroundColor = c.hex;
+                btn.title = c.name;
+                btn.addEventListener('click', () => openPixelTest(idx));
+                swatchesContainer.appendChild(btn);
+            });
+
+            document.getElementById('start-pixel-test-btn').addEventListener('click', () => openPixelTest(0));
+            document.getElementById('pixel-exit-btn').addEventListener('click', e => {
+                e.stopPropagation();
+                closePixelTest();
+            });
+            pixelOverlay.addEventListener('click', () => applyPixelTestColor(currentPixelIdx + 1));
+
+            document.addEventListener('keydown', e => {
+                if (pixelOverlay.classList.contains('hidden')) return;
+                if (e.key === 'Escape') closePixelTest();
+                else if (e.key === 'ArrowRight' || e.key === ' ') {
+                    e.preventDefault();
+                    applyPixelTestColor(currentPixelIdx + 1);
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    applyPixelTestColor(currentPixelIdx - 1);
+                }
+            });
+
+            // =================================================================
+            // 4. ПРОВЕРКА МИКРОФОНА
+            // =================================================================
+            const micToggleBtn = document.getElementById('mic-toggle-btn');
+            const micRecordBtn = document.getElementById('mic-record-btn');
+            const micPlayback = document.getElementById('mic-playback');
+            const micCanvas = document.getElementById('mic-canvas');
+            const micLevelBar = document.getElementById('mic-level-bar');
+            const micLevelText = document.getElementById('mic-level-text');
+            const micStatusLabel = document.getElementById('mic-status-label');
+
+            let micStream = null;
+            let micAudioCtx = null;
+            let micAnalyser = null;
+            let micAnimId = null;
+            let mediaRecorder = null;
+            let recordTimer = null;
+
+            function resizeMicCanvas() {
+                const dpr = window.devicePixelRatio || 1;
+                const rect = micCanvas.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) {
+                    micCanvas.width = Math.round(rect.width * dpr);
+                    micCanvas.height = Math.round(rect.height * dpr);
+                }
+            }
+            window.addEventListener('resize', resizeMicCanvas);
+
+            function stopMicrophone() {
+                if (micAnimId) cancelAnimationFrame(micAnimId);
+                micAnimId = null;
+                if (micStream) {
+                    micStream.getTracks().forEach(t => t.stop());
+                    micStream = null;
+                }
+                if (micAudioCtx) {
+                    micAudioCtx.close().catch(() => {});
+                    micAudioCtx = null;
+                }
+                micToggleBtn.textContent = '🎙️ Включить микрофон';
+                micToggleBtn.classList.remove('bg-slate-700');
+                micToggleBtn.classList.add('bg-indigo-600');
+                micRecordBtn.disabled = true;
+                micStatusLabel.textContent = 'Микрофон отключен';
+                micLevelBar.style.width = '0%';
+                micLevelText.textContent = 'Уровень: 0%';
+            }
+
+            async function startMicrophone() {
+                try {
+                    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    micAudioCtx = new AudioCtx();
+                    const source = micAudioCtx.createMediaStreamSource(micStream);
+                    micAnalyser = micAudioCtx.createAnalyser();
+                    micAnalyser.fftSize = 256;
+                    source.connect(micAnalyser);
+
+                    resizeMicCanvas();
+                    const trackLabel = micStream.getAudioTracks()[0]?.label || 'Микрофон активен';
+                    micStatusLabel.textContent = `Активен: ${trackLabel}`;
+                    micToggleBtn.textContent = '⏹ Выключить микрофон';
+                    micToggleBtn.classList.remove('bg-indigo-600');
+                    micToggleBtn.classList.add('bg-slate-700');
+                    micRecordBtn.disabled = false;
+
+                    const bufferLen = micAnalyser.frequencyBinCount;
+                    const dataArray = new Uint8Array(bufferLen);
+                    const ctx = micCanvas.getContext('2d');
+
+                    const drawMic = () => {
+                        if (!micAnalyser) return;
+                        micAnalyser.getByteFrequencyData(dataArray);
+                        const w = micCanvas.width;
+                        const h = micCanvas.height;
+                        ctx.clearRect(0, 0, w, h);
+
+                        let sum = 0;
+                        const barWidth = (w / bufferLen) * 1.6;
+                        let x = 0;
+
+                        for (let i = 0; i < bufferLen; i++) {
+                            const val = dataArray[i];
+                            sum += val;
+                            const barH = (val / 255) * h;
+                            ctx.fillStyle = `hsl(${230 - (val / 255) * 90}, 85%, 60%)`;
+                            ctx.fillRect(x, h - barH, Math.max(2, barWidth - 2), barH);
+                            x += barWidth;
+                        }
+
+                        const avg = Math.min(100, Math.round((sum / bufferLen / 140) * 100));
+                        micLevelBar.style.width = `${avg}%`;
+                        micLevelText.textContent = `Уровень: ${avg}%`;
+                        micAnimId = requestAnimationFrame(drawMic);
+                    };
+                    drawMic();
+                } catch {
+                    showToast('Нет доступа к микрофону или устройство не найдено', true);
+                }
+            }
+
+            micToggleBtn.addEventListener('click', () => {
+                if (micStream) stopMicrophone();
+                else startMicrophone();
+            });
+
+            micRecordBtn.addEventListener('click', () => {
+                if (!micStream || (mediaRecorder && mediaRecorder.state === 'recording')) return;
+                const chunks = [];
+                mediaRecorder = new MediaRecorder(micStream);
+                mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                    if (micPlayback.src) URL.revokeObjectURL(micPlayback.src);
+                    micPlayback.src = URL.createObjectURL(blob);
+                    micPlayback.classList.remove('hidden');
+                    micRecordBtn.textContent = '🔴 Записать тест (5 сек)';
+                    micRecordBtn.disabled = false;
+                    showToast('Запись завершена, можно прослушать');
+                };
+
+                mediaRecorder.start();
+                micRecordBtn.disabled = true;
+                let left = 5;
+                micRecordBtn.textContent = `⏺ Идет запись (${left}с)...`;
+                clearInterval(recordTimer);
+                recordTimer = setInterval(() => {
+                    left--;
+                    if (left > 0) {
+                        micRecordBtn.textContent = `⏺ Идет запись (${left}с)...`;
+                    } else {
+                        clearInterval(recordTimer);
+                        if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+                    }
+                }, 1000);
+            });
+
+            // =================================================================
+            // 5. ПАРОЛИ И SHA-256
+            // =================================================================
+            const passOutput = document.getElementById('pass-output');
+            const passLen = document.getElementById('pass-len');
+            const passLenVal = document.getElementById('pass-len-val');
+            const passUpper = document.getElementById('pass-upper');
+            const passLower = document.getElementById('pass-lower');
+            const passNum = document.getElementById('pass-num');
+            const passSym = document.getElementById('pass-sym');
+            const passStrengthLabel = document.getElementById('pass-strength-label');
+            const passEntropyVal = document.getElementById('pass-entropy-val');
+            const passStrengthBar = document.getElementById('pass-strength-bar');
+
+            function generatePassword() {
+                let charset = '';
+                if (passUpper.checked) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                if (passLower.checked) charset += 'abcdefghijklmnopqrstuvwxyz';
+                if (passNum.checked) charset += '0123456789';
+                if (passSym.checked) charset += '!@#$%^&*()-_=+[]{};:,.<>?';
+
+                if (!charset) {
+                    passLower.checked = true;
+                    charset = 'abcdefghijklmnopqrstuvwxyz';
+                }
+
+                const length = parseInt(passLen.value, 10);
+                passLenVal.textContent = `${length} символов`;
+
+                const randomValues = new Uint32Array(length);
+                crypto.getRandomValues(randomValues);
+                let pwd = '';
+                for (let i = 0; i < length; i++) {
+                    pwd += charset[randomValues[i] % charset.length];
+                }
+                passOutput.value = pwd;
+
+                const entropy = Math.round(length * Math.log2(charset.length));
+                passEntropyVal.textContent = `Энтропия: ${entropy} бит`;
+
+                if (entropy < 50) {
+                    passStrengthLabel.textContent = 'Слабый пароль';
+                    passStrengthLabel.className = 'font-semibold text-rose-500';
+                    passStrengthBar.className = 'h-full w-1/4 bg-rose-500 transition-all duration-200';
+                } else if (entropy < 80) {
+                    passStrengthLabel.textContent = 'Хороший пароль';
+                    passStrengthLabel.className = 'font-semibold text-amber-500';
+                    passStrengthBar.className = 'h-full w-3/5 bg-amber-500 transition-all duration-200';
+                } else {
+                    passStrengthLabel.textContent = 'Криптостойкий пароль';
+                    passStrengthLabel.className = 'font-semibold text-emerald-500';
+                    passStrengthBar.className = 'h-full w-full bg-emerald-500 transition-all duration-200';
+                }
+            }
+
+            [passLen, passUpper, passLower, passNum, passSym].forEach(el => el.addEventListener('input', generatePassword));
+            document.getElementById('pass-regen-btn').addEventListener('click', generatePassword);
+            document.getElementById('pass-copy-btn').addEventListener('click', () => copyToClipboard(passOutput.value, 'Пароль скопирован'));
+            generatePassword();
+
+            // SHA-256
+            const shaInput = document.getElementById('sha-input');
+            const shaFileInput = document.getElementById('sha-file-input');
+            const shaOutput = document.getElementById('sha-output');
+            const shaSourceLabel = document.getElementById('sha-source-label');
+
+            async function computeSha256Buffer(buffer) {
+                const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+
+            shaInput.addEventListener('input', async () => {
+                shaSourceLabel.textContent = 'Источник: текстовое поле';
+                if (!shaInput.value) {
+                    shaOutput.value = '';
+                    return;
+                }
+                const enc = new TextEncoder().encode(shaInput.value);
+                shaOutput.value = await computeSha256Buffer(enc);
+            });
+
+            shaFileInput.addEventListener('change', async e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                shaSourceLabel.textContent = `Файл: ${file.name} (${formatBytes(file.size)})`;
+                shaOutput.value = 'Вычисление хеша...';
+                const buf = await file.arrayBuffer();
+                shaOutput.value = await computeSha256Buffer(buf);
+                showToast('SHA-256 файла вычислен');
+            });
+
+            document.getElementById('sha-copy-btn').addEventListener('click', () => copyToClipboard(shaOutput.value, 'SHA-256 скопирован'));
+
+            // =================================================================
+            // 6. EXIF ПАРСЕР И ОЧИСТКА МЕТАДАННЫХ
+            // =================================================================
+            const exifDropzone = document.getElementById('exif-dropzone');
+            const exifInput = document.getElementById('exif-input');
+            const exifResults = document.getElementById('exif-results');
+            const exifTagsGrid = document.getElementById('exif-tags-grid');
+            const exifGpsBanner = document.getElementById('exif-gps-banner');
+            const exifGpsCoords = document.getElementById('exif-gps-coords');
+
+            let exifCurrentFile = null;
+
+            function parseJpegExif(arrayBuffer) {
+                const view = new DataView(arrayBuffer);
+                const meta = {};
+                if (view.byteLength < 4 || view.getUint16(0, false) !== 0xFFD8) return meta;
+
+                let offset = 2;
+                while (offset + 4 < view.byteLength) {
+                    const marker = view.getUint16(offset, false);
+                    offset += 2;
+                    if (marker === 0xFFE1) {
+                        const header = String.fromCharCode(
+                            view.getUint8(offset + 2),
+                            view.getUint8(offset + 3),
+                            view.getUint8(offset + 4),
+                            view.getUint8(offset + 5)
+                        );
+                        if (header === 'Exif') {
+                            const tiffStart = offset + 8;
+                            const littleEndian = view.getUint16(tiffStart, false) === 0x4949;
+                            const firstIfdOffset = view.getUint32(tiffStart + 4, littleEndian);
+
+                            const readAscii = (valOffset, count) => {
+                                let str = '';
+                                const start = count <= 4 ? valOffset : tiffStart + view.getUint32(valOffset, littleEndian);
+                                for (let i = 0; i < count - 1 && start + i < view.byteLength; i++) {
+                                    const ch = view.getUint8(start + i);
+                                    if (ch === 0) break;
+                                    str += String.fromCharCode(ch);
+                                }
+                                return str.trim();
+                            };
+
+                            const readRational = (valOffset) => {
+                                const ptr = tiffStart + view.getUint32(valOffset, littleEndian);
+                                if (ptr + 8 > view.byteLength) return null;
+                                const num = view.getUint32(ptr, littleEndian);
+                                const den = view.getUint32(ptr + 4, littleEndian);
+                                return den ? num / den : null;
+                            };
+
+                            const parseIfd = (ifdPtr, isGps = false) => {
+                                if (!ifdPtr || ifdPtr + 2 > view.byteLength) return;
+                                const entries = view.getUint16(ifdPtr, littleEndian);
+                                for (let i = 0; i < entries; i++) {
+                                    const entryOffset = ifdPtr + 2 + i * 12;
+                                    if (entryOffset + 12 > view.byteLength) break;
+                                    const tag = view.getUint16(entryOffset, littleEndian);
+                                    const count = view.getUint32(entryOffset + 4, littleEndian);
+                                    const valField = entryOffset + 8;
+
+                                    if (!isGps) {
+                                        if (tag === 0x010F) meta['Производитель'] = readAscii(valField, count);
+                                        else if (tag === 0x0110) meta['Модель камеры'] = readAscii(valField, count);
+                                        else if (tag === 0x0131) meta['ПО / Прошивка'] = readAscii(valField, count);
+                                        else if (tag === 0x0132 || tag === 0x9003) meta['Дата съемки'] = readAscii(valField, count);
+                                        else if (tag === 0x8827) meta['ISO'] = view.getUint16(valField, littleEndian);
+                                        else if (tag === 0x829D) {
+                                            const f = readRational(valField);
+                                            if (f) meta['Диафрагма'] = `f/${f.toFixed(1)}`;
+                                        } else if (tag === 0x829A) {
+                                            const exp = readRational(valField);
+                                            if (exp) meta['Выдержка'] = exp < 1 ? `1/${Math.round(1 / exp)} с` : `${exp} с`;
+                                        } else if (tag === 0x8769) {
+                                            parseIfd(tiffStart + view.getUint32(valField, littleEndian), false);
+                                        } else if (tag === 0x8825) {
+                                            parseIfd(tiffStart + view.getUint32(valField, littleEndian), true);
+                                        }
+                                    } else {
+                                        if (tag === 0x0001) meta._latRef = readAscii(valField, count);
+                                        else if (tag === 0x0003) meta._lonRef = readAscii(valField, count);
+                                        else if (tag === 0x0002 || tag === 0x0004) {
+                                            const ptr = tiffStart + view.getUint32(valField, littleEndian);
+                                            if (ptr + 24 <= view.byteLength) {
+                                                const d = view.getUint32(ptr, littleEndian) / (view.getUint32(ptr + 4, littleEndian) || 1);
+                                                const m = view.getUint32(ptr + 8, littleEndian) / (view.getUint32(ptr + 12, littleEndian) || 1);
+                                                const s = view.getUint32(ptr + 16, littleEndian) / (view.getUint32(ptr + 20, littleEndian) || 1);
+                                                const dec = d + m / 60 + s / 3600;
+                                                if (tag === 0x0002) meta._lat = dec;
+                                                else meta._lon = dec;
+                                            }
+                                        }
+                                    }
+                                }
+                            };
+
+                            parseIfd(tiffStart + firstIfdOffset, false);
+                        }
+                        break;
+                    } else if ((marker & 0xFF00) !== 0xFF00) {
+                        break;
+                    } else {
+                        const segLen = view.getUint16(offset, false);
+                        offset += segLen;
+                    }
+                }
+                return meta;
+            }
+
+            async function handleExifFile(file) {
+                if (!file || !file.type.startsWith('image/')) return;
+                exifCurrentFile = file;
+                const buf = await file.arrayBuffer();
+                const meta = file.type === 'image/jpeg' ? parseJpegExif(buf) : {};
+
+                exifTagsGrid.innerHTML = '';
+                const addCard = (label, value) => {
+                    const div = document.createElement('div');
+                    div.className = 'p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800';
+                    div.innerHTML = `<span class="text-[11px] text-slate-500 block">${label}</span><span class="font-mono font-semibold text-xs mt-0.5 block break-all">${value}</span>`;
+                    exifTagsGrid.appendChild(div);
+                };
+
+                addCard('Имя файла', file.name);
+                addCard('Тип и размер', `${file.type} • ${formatBytes(file.size)}`);
+
+                if (typeof meta._lat === 'number' && typeof meta._lon === 'number') {
+                    const lat = (meta._latRef === 'S' ? -meta._lat : meta._lat).toFixed(6);
+                    const lon = (meta._lonRef === 'W' ? -meta._lon : meta._lon).toFixed(6);
+                    exifGpsCoords.textContent = `${lat}, ${lon}`;
+                    exifGpsBanner.classList.remove('hidden');
+                } else {
+                    exifGpsBanner.classList.add('hidden');
+                }
+
+                const displayKeys = Object.keys(meta).filter(k => !k.startsWith('_'));
+                if (displayKeys.length === 0) {
+                    addCard('Статус EXIF', 'Теги камеры и GPS не обнаружены (чистый файл)');
+                } else {
+                    displayKeys.forEach(k => addCard(k, meta[k]));
+                }
+
+                exifDropzone.classList.add('hidden');
+                exifResults.classList.remove('hidden');
+            }
+
+            exifDropzone.addEventListener('click', () => exifInput.click());
+            exifInput.addEventListener('change', e => { if (e.target.files[0]) handleExifFile(e.target.files[0]); });
+
+            document.getElementById('exif-clean-download-btn').addEventListener('click', () => {
+                if (!exifCurrentFile) return;
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.naturalWidth;
+                        canvas.height = img.naturalHeight;
+                        const ctx = canvas.getContext('2d');
+                        // Сохраняем исходный формат (PNG сохраняет альфа-канал прозрачности)
+                        const outMime = exifCurrentFile.type === 'image/png' ? 'image/png' :
+                                        exifCurrentFile.type === 'image/webp' ? 'image/webp' : 'image/jpeg';
+                        if (outMime === 'image/jpeg') {
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        }
+                        ctx.drawImage(img, 0, 0);
+                        canvas.toBlob(blob => {
+                            if (!blob) return;
+                            const ext = outMime.split('/')[1];
+                            const cleanName = exifCurrentFile.name.replace(/\.[^.]+$/, '') + `_clean.${ext}`;
+                            const a = document.createElement('a');
+                            a.href = URL.createObjectURL(blob);
+                            a.download = cleanName;
+                            a.click();
+                            setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+                            showToast('Копия без EXIF и GPS сохранена');
+                        }, outMime, 0.94);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(exifCurrentFile);
+            });
+
+            document.getElementById('exif-reset-btn').addEventListener('click', () => {
+                exifCurrentFile = null;
+                exifInput.value = '';
+                exifResults.classList.add('hidden');
+                exifDropzone.classList.remove('hidden');
+            });
+
+            // =================================================================
+            // 7. СРАВНЕНИЕ ТЕКСТА (LCS DIFF)
+            // =================================================================
+            const diffLeft = document.getElementById('diff-left');
+            const diffRight = document.getElementById('diff-right');
+            const diffIgnoreWs = document.getElementById('diff-ignore-ws');
+            const diffOutput = document.getElementById('diff-output');
+            const diffStats = document.getElementById('diff-stats');
+
+            function computeLineDiff() {
+                const norm = s => diffIgnoreWs.checked ? s.replace(/\s+/g, ' ').trim() : s;
+                const a = diffLeft.value.split('\n');
+                const b = diffRight.value.split('\n');
+                const m = a.length;
+                const n = b.length;
+
+                const dp = Array.from({ length: m + 1 }, () => new Uint16Array(n + 1));
+                for (let i = m - 1; i >= 0; i--) {
+                    for (let j = n - 1; j >= 0; j--) {
+                        if (norm(a[i]) === norm(b[j])) dp[i][j] = dp[i + 1][j + 1] + 1;
+                        else dp[i][j] = Math.max(dp[i + 1][j], dp[i][j + 1]);
+                    }
+                }
+
+                const ops = [];
+                let i = 0, j = 0, added = 0, removed = 0, same = 0;
+                while (i < m && j < n) {
+                    if (norm(a[i]) === norm(b[j])) {
+                        ops.push({ type: 'same', text: b[j] });
+                        same++; i++; j++;
+                    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+                        ops.push({ type: 'del', text: a[i] });
+                        removed++; i++;
+                    } else {
+                        ops.push({ type: 'add', text: b[j] });
+                        added++; j++;
+                    }
+                }
+                while (i < m) { ops.push({ type: 'del', text: a[i++] }); removed++; }
+                while (j < n) { ops.push({ type: 'add', text: b[j++] }); added++; }
+
+                diffStats.innerHTML = `
+                    <span class="text-emerald-500">+${added} добавлено</span>
+                    <span class="text-rose-500">-${removed} удалено</span>
+                    <span class="text-slate-400">${same} без изменений</span>
+                `;
+
+                diffOutput.innerHTML = '';
+                ops.forEach(op => {
+                    const line = document.createElement('div');
+                    if (op.type === 'add') {
+                        line.className = 'px-2.5 py-1 rounded bg-emerald-500/15 text-emerald-300 border-l-2 border-emerald-500';
+                        line.textContent = `+ ${op.text}`;
+                    } else if (op.type === 'del') {
+                        line.className = 'px-2.5 py-1 rounded bg-rose-500/15 text-rose-300 border-l-2 border-rose-500';
+                        line.textContent = `- ${op.text}`;
+                    } else {
+                        line.className = 'px-2.5 py-1 text-slate-400';
+                        line.textContent = `  ${op.text}`;
+                    }
+                    diffOutput.appendChild(line);
+                });
+            }
+
+            document.getElementById('diff-run-btn').addEventListener('click', computeLineDiff);
+            diffIgnoreWs.addEventListener('change', computeLineDiff);
+            computeLineDiff();
+
+            // =================================================================
+            // 8. JSON / BASE64 / URL / JWT
+            // =================================================================
+            const devInput = document.getElementById('dev-input');
+            const devActions = document.getElementById('dev-actions');
+            const devOutput = document.getElementById('dev-output');
+            const devStatus = document.getElementById('dev-status');
+            let currentDevMode = 'json';
+
+            function setDevStatus(msg, type = 'ok') {
+                devStatus.textContent = msg;
+                devStatus.classList.remove('hidden', 'bg-emerald-500/10', 'text-emerald-500', 'bg-rose-500/10', 'text-rose-500', 'bg-amber-500/10', 'text-amber-500');
+                if (type === 'ok') devStatus.classList.add('bg-emerald-500/10', 'text-emerald-500');
+                else if (type === 'warn') devStatus.classList.add('bg-amber-500/10', 'text-amber-500');
+                else devStatus.classList.add('bg-rose-500/10', 'text-rose-500');
+            }
+
+            function renderDevMode(mode) {
+                currentDevMode = mode;
+                devStatus.classList.add('hidden');
+                devActions.innerHTML = '';
+
+                const addBtn = (label, fn) => {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition';
+                    b.textContent = label;
+                    b.addEventListener('click', fn);
+                    devActions.appendChild(b);
+                };
+
+                if (mode === 'json') {
+                    addBtn('✨ Форматировать (2 пробела)', () => {
+                        try {
+                            const parsed = JSON.parse(devInput.value);
+                            devOutput.textContent = JSON.stringify(parsed, null, 2);
+                            setDevStatus('Валидный JSON успешно отформатирован', 'ok');
+                        } catch (e) {
+                            setDevStatus(`Ошибка синтаксиса JSON: ${e.message}`, 'err');
+                        }
+                    });
+                    addBtn('📦 Минифицировать', () => {
+                        try {
+                            const parsed = JSON.parse(devInput.value);
+                            devOutput.textContent = JSON.stringify(parsed);
+                            setDevStatus('JSON сжат в одну строку', 'ok');
+                        } catch (e) {
+                            setDevStatus(`Ошибка синтаксиса JSON: ${e.message}`, 'err');
+                        }
+                    });
+                } else if (mode === 'base64') {
+                    addBtn('🔒 Кодировать в Base64 (UTF-8)', () => {
+                        const bytes = new TextEncoder().encode(devInput.value);
+                        let bin = '';
+                        bytes.forEach(b => { bin += String.fromCharCode(b); });
+                        devOutput.textContent = btoa(bin);
+                        setDevStatus('Закодировано в Base64', 'ok');
+                    });
+                    addBtn('🔓 Декодировать из Base64', () => {
+                        try {
+                            const bin = atob(devInput.value.trim());
+                            const bytes = Uint8Array.from(bin, ch => ch.charCodeAt(0));
+                            devOutput.textContent = new TextDecoder().decode(bytes);
+                            setDevStatus('Декодировано из Base64', 'ok');
+                        } catch {
+                            setDevStatus('Некорректная строка Base64', 'err');
+                        }
+                    });
+                } else if (mode === 'url') {
+                    addBtn('🔗 URL Encode', () => {
+                        devOutput.textContent = encodeURIComponent(devInput.value);
+                        setDevStatus('Строка закодирована для URL', 'ok');
+                    });
+                    addBtn('🔓 URL Decode', () => {
+                        try {
+                            devOutput.textContent = decodeURIComponent(devInput.value);
+                            setDevStatus('URL декодирован', 'ok');
+                        } catch {
+                            setDevStatus('Ошибка декодирования URI', 'err');
+                        }
+                    });
+                } else if (mode === 'jwt') {
+                    if (!devInput.value.includes('.')) {
+                        devInput.value = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkxvY2FsVG9vbHMgVXNlciIsImV4cCI6MTg5MzQ1NjAwMH0.signature';
+                    }
+                    addBtn('🪪 Декодировать JWT локально', () => {
+                        try {
+                            const parts = devInput.value.trim().split('.');
+                            if (parts.length < 2) throw new Error('Токен должен содержать минимум 2 части (Header.Payload)');
+                            const decodePart = str => {
+                                const b64 = str.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(str.length / 4) * 4, '=');
+                                const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+                                return JSON.parse(new TextDecoder().decode(bytes));
+                            };
+                            const header = decodePart(parts[0]);
+                            const payload = decodePart(parts[1]);
+                            devOutput.textContent = JSON.stringify({ header, payload }, null, 2);
+
+                            if (payload.exp) {
+                                const expDate = new Date(payload.exp * 1000);
+                                const isExpired = Date.now() > payload.exp * 1000;
+                                setDevStatus(
+                                    isExpired
+                                        ? `Срок действия токена ИСТЕК: ${expDate.toLocaleString('ru-RU')}`
+                                        : `Токен действителен до: ${expDate.toLocaleString('ru-RU')}`,
+                                    isExpired ? 'warn' : 'ok'
+                                );
+                            } else {
+                                setDevStatus('JWT декодирован (поле exp отсутствует)', 'ok');
+                            }
+                        } catch (e) {
+                            setDevStatus(`Ошибка разбора JWT: ${e.message}`, 'err');
+                        }
+                    });
+                }
+            }
+
+            document.querySelectorAll('.dev-subtab').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.dev-subtab').forEach(b => {
+                        b.classList.remove('bg-white', 'dark:bg-slate-800', 'text-indigo-600', 'dark:text-indigo-400', 'shadow-sm');
+                        b.classList.add('text-slate-600', 'dark:text-slate-400');
+                    });
+                    btn.classList.add('bg-white', 'dark:bg-slate-800', 'text-indigo-600', 'dark:text-indigo-400', 'shadow-sm');
+                    btn.classList.remove('text-slate-600', 'dark:text-slate-400');
+                    renderDevMode(btn.getAttribute('data-devmode'));
+                });
+            });
+            document.getElementById('dev-copy-btn').addEventListener('click', () => copyToClipboard(devOutput.textContent));
+            renderDevMode('json');
+            devOutput.textContent = JSON.stringify(JSON.parse(devInput.value), null, 2);
+
+            // =================================================================
+            // 9. ТЕКСТ И ОЧИСТКА
+            // =================================================================
+            const txtEditor = document.getElementById('txt-editor');
+            function updateTextStats() {
+                const val = txtEditor.value;
+                const noSpaces = val.replace(/\s/g, '').length;
+                const words = val.trim() ? val.trim().split(/\s+/).length : 0;
+                const lines = val ? val.split('\n').length : 0;
+                const readSec = Math.ceil((words / 180) * 60);
+
+                document.getElementById('txt-stat-chars').textContent = `${val.length} (${noSpaces})`;
+                document.getElementById('txt-stat-words').textContent = words;
+                document.getElementById('txt-stat-lines').textContent = lines;
+                document.getElementById('txt-stat-read').textContent = readSec < 60 ? `${readSec} сек` : `${Math.ceil(readSec / 60)} мин`;
+            }
+            txtEditor.addEventListener('input', updateTextStats);
+
+            const translitMap = {
+                'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i','й':'y',
+                'к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f',
+                'х':'kh','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya',
+                'А':'A','Б':'B','В':'V','Г':'G','Д':'D','Е':'E','Ё':'Yo','Ж':'Zh','З':'Z','И':'I','Й':'Y',
+                'К':'K','Л':'L','М':'M','Н':'N','О':'O','П':'P','Р':'R','С':'S','Т':'T','У':'U','Ф':'F',
+                'Х':'Kh','Ц':'Ts','Ч':'Ch','Ш':'Sh','Щ':'Shch','Ъ':'','Ы':'Y','Ь':'','Э':'E','Ю':'Yu','Я':'Ya'
+            };
+
+            document.querySelectorAll('.txt-act-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const act = btn.getAttribute('data-txtact');
+                    let val = txtEditor.value;
+                    if (act === 'dedupe') {
+                        val = Array.from(new Set(val.split('\n'))).join('\n');
+                    } else if (act === 'spaces') {
+                        val = val.split('\n').map(l => l.replace(/[ \t]+/g, ' ').trim()).join('\n');
+                    } else if (act === 'empty-lines') {
+                        val = val.split('\n').filter(l => l.trim().length > 0).join('\n');
+                    } else if (act === 'strip-html') {
+                        const tmp = document.createElement('div');
+                        tmp.innerHTML = val;
+                        val = tmp.textContent || tmp.innerText || '';
+                    } else if (act === 'sort') {
+                        val = val.split('\n').sort((a, b) => a.localeCompare(b, 'ru')).join('\n');
+                    } else if (act === 'translit') {
+                        val = val.split('').map(ch => translitMap[ch] !== undefined ? translitMap[ch] : ch).join('');
+                    }
+                    txtEditor.value = val;
+                    updateTextStats();
+                    showToast('Текст обработан');
+                });
+            });
+            document.getElementById('txt-copy-btn').addEventListener('click', () => copyToClipboard(txtEditor.value));
+
+            // =================================================================
+            // 10. АУДИО ТОН-ГЕНЕРАТОР + TAP TEMPO (BPM)
+            // =================================================================
+            const toneFreq = document.getElementById('tone-freq');
+            const toneFreqVal = document.getElementById('tone-freq-val');
+            const toneWave = document.getElementById('tone-wave');
+            const tonePan = document.getElementById('tone-pan');
+            const toneToggleBtn = document.getElementById('tone-toggle-btn');
+
+            let toneCtx = null;
+            let toneOsc = null;
+            let tonePanner = null;
+            let tonePlaying = false;
+
+            function stopTone() {
+                if (toneOsc) {
+                    try { toneOsc.stop(); toneOsc.disconnect(); } catch {}
+                    toneOsc = null;
+                }
+                tonePlaying = false;
+                toneToggleBtn.textContent = '▶️ Включить звук';
+                toneToggleBtn.classList.remove('bg-rose-600', 'hover:bg-rose-700');
+                toneToggleBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            }
+
+            function startTone() {
+                stopTone();
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!toneCtx || toneCtx.state === 'closed') {
+                    toneCtx = new AudioCtx();
+                }
+                if (toneCtx.state === 'suspended') {
+                    toneCtx.resume();
+                }
+
+                toneOsc = toneCtx.createOscillator();
+                const gain = toneCtx.createGain();
+                gain.gain.value = 0.22;
+
+                toneOsc.type = toneWave.value;
+                toneOsc.frequency.value = parseFloat(toneFreq.value);
+
+                if (toneCtx.createStereoPanner) {
+                    tonePanner = toneCtx.createStereoPanner();
+                    tonePanner.pan.value = parseFloat(tonePan.value);
+                    toneOsc.connect(gain);
+                    gain.connect(tonePanner);
+                    tonePanner.connect(toneCtx.destination);
+                } else {
+                    toneOsc.connect(gain);
+                    gain.connect(toneCtx.destination);
+                }
+
+                toneOsc.start();
+                tonePlaying = true;
+                toneToggleBtn.textContent = '⏹ Выключить звук';
+                toneToggleBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                toneToggleBtn.classList.add('bg-rose-600', 'hover:bg-rose-700');
+            }
+
+            toneToggleBtn.addEventListener('click', () => {
+                if (tonePlaying) stopTone();
+                else startTone();
+            });
+
+            toneFreq.addEventListener('input', () => {
+                const hz = parseInt(toneFreq.value, 10);
+                toneFreqVal.textContent = hz >= 1000 ? `${(hz / 1000).toFixed(2)} кГц` : `${hz} Гц`;
+                if (toneOsc && toneCtx) toneOsc.frequency.setValueAtTime(hz, toneCtx.currentTime);
+            });
+
+            toneWave.addEventListener('change', () => {
+                if (toneOsc) toneOsc.type = toneWave.value;
+            });
+
+            tonePan.addEventListener('change', () => {
+                if (tonePanner && toneCtx) tonePanner.pan.setValueAtTime(parseFloat(tonePan.value), toneCtx.currentTime);
+            });
+
+            document.querySelectorAll('.tone-preset').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    toneFreq.value = btn.getAttribute('data-freq');
+                    toneFreq.dispatchEvent(new Event('input'));
+                });
+            });
+
+            // Tap Tempo (BPM) без двойного срабатывания на Пробел
+            const bpmValEl = document.getElementById('bpm-val');
+            const bpmTapsInfo = document.getElementById('bpm-taps-info');
+            const bpmTapBtn = document.getElementById('bpm-tap-btn');
+            let tapTimes = [];
+
+            function registerTap() {
+                const now = performance.now();
+                if (tapTimes.length > 0 && now - tapTimes[tapTimes.length - 1] > 2500) {
+                    tapTimes = [];
+                }
+                tapTimes.push(now);
+                if (tapTimes.length > 12) tapTimes.shift();
+
+                if (tapTimes.length >= 2) {
+                    const avgInterval = (tapTimes[tapTimes.length - 1] - tapTimes[0]) / (tapTimes.length - 1);
+                    const bpm = Math.round(60000 / avgInterval);
+                    bpmValEl.textContent = bpm;
+                    bpmTapsInfo.textContent = `Измерено по ${tapTimes.length} ударам`;
+                } else {
+                    bpmTapsInfo.textContent = 'Первый удар зафиксирован, продолжайте ритм...';
+                }
+            }
+
+            bpmTapBtn.addEventListener('click', () => {
+                bpmTapBtn.blur(); // Снимаем фокус, чтобы Space не вызывал повторный click
+                registerTap();
+            });
+
+            document.addEventListener('keydown', e => {
+                if (e.code === 'Space' && !document.getElementById('audio-tool').classList.contains('hidden')) {
+                    const tag = document.activeElement?.tagName;
+                    if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
+                        e.preventDefault();
+                        registerTap();
+                    }
+                }
+            });
+
+            document.getElementById('bpm-reset-btn').addEventListener('click', () => {
+                tapTimes = [];
+                bpmValEl.textContent = '—';
+                bpmTapsInfo.textContent = 'Нажимайте кнопку в такт музыке (или клавишу Пробел)';
+            });
+
+            // =================================================================
+            // 11. ТЕСТ FPS, ГЕРЦОВКИ ЭКРАНА И ПЛАВНОСТИ (UFO + СТРЕСС CANVAS)
+            // =================================================================
+            const fpsCurrentVal = document.getElementById('fps-current-val');
+            const fpsHzEst = document.getElementById('fps-hz-est');
+            const fpsAvgVal = document.getElementById('fps-avg-val');
+            const fpsMinMaxVal = document.getElementById('fps-minmax-val');
+            const fpsFrameTimeVal = document.getElementById('fps-frametime-val');
+            const fpsJitterVal = document.getElementById('fps-jitter-val');
+            const fpsPauseBtn = document.getElementById('fps-pause-btn');
+            const fpsResetBtn = document.getElementById('fps-reset-btn');
+
+            const fpsGraphCanvas = document.getElementById('fps-graph-canvas');
+            const ufoCanvas = document.getElementById('ufo-canvas');
+            const stressCanvas = document.getElementById('stress-canvas');
+            const stressCanvasWrap = document.getElementById('stress-canvas-wrap');
+
+            const ufoSpeedSlider = document.getElementById('ufo-speed');
+            const ufoSpeedVal = document.getElementById('ufo-speed-val');
+            const ufoGridToggle = document.getElementById('ufo-grid-toggle');
+            const ufoTrailToggle = document.getElementById('ufo-trail-toggle');
+
+            let fpsRafId = null;
+            let fpsPaused = false;
+            let lastFrameTime = performance.now();
+            let frameHistory = [];
+            let fpsSamples = [];
+            let minFps = Infinity;
+            let maxFps = 0;
+            let lastUiUpdate = 0;
+
+            const ufoTracks = [
+                { label: 'Нативный (Max Hz)', targetFps: 0, x: 40, lastUpdate: 0, color: '#6366f1' },
+                { label: 'Половина / 30 FPS', targetFps: 30, x: 40, lastUpdate: 0, color: '#10b981' },
+                { label: 'Кино / 15 FPS', targetFps: 15, x: 40, lastUpdate: 0, color: '#f59e0b' }
+            ];
+
+            let stressParticles = [];
+            let stressCount = 0;
+
+            function initHardwareInfo() {
+                document.getElementById('hw-cpu').textContent = navigator.hardwareConcurrency
+                    ? `${navigator.hardwareConcurrency} логич. ядер`
+                    : 'Недоступно';
+                document.getElementById('hw-ram').textContent = navigator.deviceMemory
+                    ? `~${navigator.deviceMemory} ГБ`
+                    : 'Скрыто браузером';
+                document.getElementById('hw-screen').textContent = `${screen.width}×${screen.height} (${window.devicePixelRatio || 1}x)`;
+
+                try {
+                    const glCanvas = document.createElement('canvas');
+                    const gl = glCanvas.getContext('webgl') || glCanvas.getContext('experimental-webgl');
+                    if (gl) {
+                        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                        const renderer = debugInfo
+                            ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+                            : gl.getParameter(gl.RENDERER);
+                        const gpuEl = document.getElementById('hw-gpu');
+                        gpuEl.textContent = renderer || 'WebGL Active';
+                        gpuEl.title = renderer || '';
+                    }
+                } catch {
+                    document.getElementById('hw-gpu').textContent = 'WebGL недоступен';
+                }
+            }
+            initHardwareInfo();
+
+            function resizeFpsCanvases() {
+                const dpr = window.devicePixelRatio || 1;
+                [fpsGraphCanvas, ufoCanvas, stressCanvas].forEach(c => {
+                    if (!c) return;
+                    const rect = c.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) {
+                        c.width = Math.round(rect.width * dpr);
+                        c.height = Math.round(rect.height * dpr);
+                    }
+                });
+            }
+            window.addEventListener('resize', resizeFpsCanvases);
+
+            function estimateRefreshRate(fps) {
+                const standards = [60, 75, 90, 120, 144, 165, 240, 360];
+                let closest = standards[0];
+                for (const hz of standards) {
+                    if (Math.abs(fps - hz) < Math.abs(fps - closest)) closest = hz;
+                }
+                return Math.abs(fps - closest) <= 8 ? `~${closest} Гц` : `${Math.round(fps)} Гц`;
+            }
+
+            function buildStressParticles(count) {
+                stressCount = count;
+                stressCanvasWrap.classList.toggle('hidden', count === 0);
+                if (count === 0) {
+                    stressParticles = [];
+                    return;
+                }
+                resizeFpsCanvases();
+                const w = stressCanvas.width || 600;
+                const h = stressCanvas.height || 176;
+                const palette = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#06b6d4'];
+                stressParticles = Array.from({ length: count }, (_, i) => ({
+                    x: Math.random() * w,
+                    y: Math.random() * h,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    r: count > 3000 ? 2 : 3.5,
+                    color: palette[i % palette.length]
+                }));
+            }
+
+            document.querySelectorAll('.stress-preset-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const count = parseInt(btn.getAttribute('data-particles'), 10);
+                    document.querySelectorAll('.stress-preset-btn').forEach(b => {
+                        b.classList.remove('bg-indigo-600', 'text-white');
+                        b.classList.add('bg-white', 'dark:bg-slate-900', 'border', 'border-slate-200', 'dark:border-slate-800');
+                    });
+                    btn.classList.add('bg-indigo-600', 'text-white');
+                    btn.classList.remove('bg-white', 'dark:bg-slate-900', 'border', 'border-slate-200', 'dark:border-slate-800');
+                    buildStressParticles(count);
+                });
+            });
+
+            ufoSpeedSlider.addEventListener('input', () => {
+                ufoSpeedVal.textContent = `${ufoSpeedSlider.value} px/с`;
+            });
+
+            function resetFpsStats() {
+                frameHistory = [];
+                fpsSamples = [];
+                minFps = Infinity;
+                maxFps = 0;
+                fpsCurrentVal.textContent = '—';
+                fpsAvgVal.textContent = '—';
+                fpsMinMaxVal.textContent = '— / —';
+                fpsFrameTimeVal.textContent = '— мс';
+                fpsJitterVal.textContent = 'Калибровка...';
+            }
+
+            fpsResetBtn.addEventListener('click', resetFpsStats);
+            fpsPauseBtn.addEventListener('click', () => {
+                fpsPaused = !fpsPaused;
+                fpsPauseBtn.textContent = fpsPaused ? '▶️ Продолжить' : '⏸ Пауза';
+                if (!fpsPaused) {
+                    lastFrameTime = performance.now();
+                    startFpsMonitor();
+                }
+            });
+
+            function drawFpsGraph() {
+                const w = fpsGraphCanvas.width;
+                const h = fpsGraphCanvas.height;
+                if (!w || !h) return;
+                const ctx = fpsGraphCanvas.getContext('2d');
+                const dpr = window.devicePixelRatio || 1;
+                ctx.clearRect(0, 0, w, h);
+
+                const maxMs = 42;
+                const drawRefLine = (ms, color, label) => {
+                    const y = h - (ms / maxMs) * h;
+                    ctx.strokeStyle = color;
+                    ctx.setLineDash([4 * dpr, 4 * dpr]);
+                    ctx.lineWidth = 1 * dpr;
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(w, y);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = color;
+                    ctx.font = `${10 * dpr}px monospace`;
+                    ctx.fillText(label, 6 * dpr, y - 3 * dpr);
+                };
+
+                drawRefLine(8.33, 'rgba(16, 185, 129, 0.35)', '8.3ms (120Hz)');
+                drawRefLine(16.67, 'rgba(99, 102, 241, 0.45)', '16.7ms (60Hz)');
+                drawRefLine(33.33, 'rgba(244, 63, 94, 0.4)', '33.3ms (30Hz)');
+
+                if (frameHistory.length < 2) return;
+                const stepX = w / 140;
+                ctx.lineWidth = 2 * dpr;
+                ctx.beginPath();
+                frameHistory.forEach((ms, idx) => {
+                    const clamped = Math.min(maxMs, Math.max(1, ms));
+                    const x = idx * stepX;
+                    const y = h - (clamped / maxMs) * h;
+                    if (idx === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.strokeStyle = '#818cf8';
+                ctx.stroke();
+            }
+
+            function drawUfoTracks(now, dtSec) {
+                const w = ufoCanvas.width;
+                const h = ufoCanvas.height;
+                if (!w || !h) return;
+                const ctx = ufoCanvas.getContext('2d');
+                const dpr = window.devicePixelRatio || 1;
+                const speed = parseInt(ufoSpeedSlider.value, 10) * dpr;
+
+                if (ufoTrailToggle.checked) {
+                    ctx.fillStyle = 'rgba(2, 6, 23, 0.35)';
+                    ctx.fillRect(0, 0, w, h);
+                } else {
+                    ctx.clearRect(0, 0, w, h);
+                }
+
+                if (ufoGridToggle.checked) {
+                    ctx.strokeStyle = 'rgba(148, 163, 184, 0.1)';
+                    ctx.lineWidth = 1 * dpr;
+                    const gridStep = 32 * dpr;
+                    for (let gx = 0; gx < w; gx += gridStep) {
+                        ctx.beginPath();
+                        ctx.moveTo(gx, 0);
+                        ctx.lineTo(gx, h);
+                        ctx.stroke();
+                    }
+                }
+
+                const laneH = h / ufoTracks.length;
+                const objW = 46 * dpr;
+                const objH = 18 * dpr;
+
+                ufoTracks.forEach((track, idx) => {
+                    const topY = idx * laneH;
+                    if (idx > 0) {
+                        ctx.strokeStyle = 'rgba(51, 65, 85, 0.6)';
+                        ctx.beginPath();
+                        ctx.moveTo(0, topY);
+                        ctx.lineTo(w, topY);
+                        ctx.stroke();
+                    }
+
+                    if (track.targetFps === 0) {
+                        track.x += speed * dtSec;
+                    } else {
+                        const interval = 1000 / track.targetFps;
+                        if (now - track.lastUpdate >= interval) {
+                            const elapsed = track.lastUpdate === 0 ? interval / 1000 : (now - track.lastUpdate) / 1000;
+                            track.x += speed * elapsed;
+                            track.lastUpdate = now;
+                        }
+                    }
+
+                    if (track.x > w + objW) track.x = -objW;
+
+                    ctx.fillStyle = 'rgba(226, 232, 240, 0.75)';
+                    ctx.font = `600 ${10 * dpr}px sans-serif`;
+                    ctx.fillText(track.label, 10 * dpr, topY + 14 * dpr);
+
+                    const cy = topY + laneH * 0.62 - objH / 2;
+                    ctx.fillStyle = track.color;
+                    ctx.beginPath();
+                    if (ctx.roundRect) {
+                        ctx.roundRect(track.x, cy, objW, objH, 6 * dpr);
+                    } else {
+                        ctx.rect(track.x, cy, objW, objH);
+                    }
+                    ctx.fill();
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(track.x + objW * 0.25, cy + 3 * dpr, 3 * dpr, objH - 6 * dpr);
+                    ctx.fillRect(track.x + objW * 0.68, cy + 3 * dpr, 3 * dpr, objH - 6 * dpr);
+                });
+            }
+
+            function drawStressTest() {
+                if (stressCount === 0) return;
+                const w = stressCanvas.width;
+                const h = stressCanvas.height;
+                if (!w || !h) return;
+                const ctx = stressCanvas.getContext('2d');
+                ctx.clearRect(0, 0, w, h);
+
+                for (let i = 0; i < stressParticles.length; i++) {
+                    const p = stressParticles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if (p.x < 0 || p.x > w) p.vx *= -1;
+                    if (p.y < 0 || p.y > h) p.vy *= -1;
+
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x, p.y, p.r * 2, p.r * 2);
+                }
+            }
+
+            function startFpsMonitor() {
+                if (fpsRafId) cancelAnimationFrame(fpsRafId);
+                lastFrameTime = performance.now();
+
+                const loop = now => {
+                    if (fpsPaused) return;
+                    if (document.getElementById('fps-tool').classList.contains('hidden')) {
+                        fpsRafId = null;
+                        return;
+                    }
+
+                    const dtMs = now - lastFrameTime;
+                    lastFrameTime = now;
+
+                    if (dtMs > 0 && dtMs < 500) {
+                        const instantFps = 1000 / dtMs;
+                        frameHistory.push(dtMs);
+                        if (frameHistory.length > 140) frameHistory.shift();
+
+                        fpsSamples.push(instantFps);
+                        if (fpsSamples.length > 120) fpsSamples.shift();
+
+                        if (fpsSamples.length > 10) {
+                            if (instantFps < minFps) minFps = instantFps;
+                            if (instantFps > maxFps) maxFps = instantFps;
+                        }
+
+                        if (now - lastUiUpdate > 120 && fpsSamples.length > 3) {
+                            lastUiUpdate = now;
+                            const avgFps = fpsSamples.reduce((a, b) => a + b, 0) / fpsSamples.length;
+                            const avgMs = frameHistory.reduce((a, b) => a + b, 0) / frameHistory.length;
+                            const roundedFps = Math.round(avgFps);
+
+                            fpsCurrentVal.textContent = roundedFps;
+                            fpsHzEst.textContent = estimateRefreshRate(avgFps);
+                            fpsAvgVal.textContent = `${avgFps.toFixed(1)} FPS`;
+                            fpsMinMaxVal.textContent = `${Math.round(minFps === Infinity ? roundedFps : minFps)} / ${Math.round(maxFps || roundedFps)}`;
+                            fpsFrameTimeVal.textContent = `${avgMs.toFixed(2)} мс`;
+
+                            const variance = frameHistory.reduce((acc, v) => acc + Math.pow(v - avgMs, 2), 0) / frameHistory.length;
+                            const jitter = Math.sqrt(variance);
+                            if (jitter < 1.5) {
+                                fpsJitterVal.textContent = `Идеально (±${jitter.toFixed(1)} мс)`;
+                                fpsJitterVal.className = 'font-mono text-sm font-semibold mt-1.5 block text-emerald-500';
+                            } else if (jitter < 4.5) {
+                                fpsJitterVal.textContent = `Норма (±${jitter.toFixed(1)} мс)`;
+                                fpsJitterVal.className = 'font-mono text-sm font-semibold mt-1.5 block text-amber-500';
+                            } else {
+                                fpsJitterVal.textContent = `Фризы (±${jitter.toFixed(1)} мс)`;
+                                fpsJitterVal.className = 'font-mono text-sm font-semibold mt-1.5 block text-rose-500';
+                            }
+                        }
+                    }
+
+                    drawFpsGraph();
+                    drawUfoTracks(now, Math.min(0.1, dtMs / 1000));
+                    drawStressTest();
+
+                    fpsRafId = requestAnimationFrame(loop);
+                };
+
+                fpsRafId = requestAnimationFrame(loop);
+            }
+        });
+    </script>
+</body>
+</html>
